@@ -10,6 +10,7 @@ public class WordsPanelScript : MonoBehaviour
     public static WordsPanelScript Instance;
 
     [Header("Words Panel Components")]
+    [SerializeField] Image _wrdImageObject;
     [SerializeField] Transform _wrdContentTransform;
     [SerializeField] Transform _wholeWordTransform;
     [SerializeField] Transform _jumbledWordTransform;
@@ -17,35 +18,44 @@ public class WordsPanelScript : MonoBehaviour
     [Header("Prefabs")]
     [SerializeField] GameObject _wholeWordPrefab;
 
-    [Header("Sub Category Array")]
-    [SerializeField] string[] _foodsItem = { "Pizza", "Burger", "Pasta", "Candy", "Donut", "Bread", "Fries", "Cookies", "Noodle", "Chips", "Cake", "Pie" };
-    [SerializeField] string[] _fruitsItem = { "Mango", "Apple", "Banana", "Grapes", "Peach", "Orange", "Cherry", "Papaya", "Pear", "Guava", "Berry", "Kiwi" };
-    [SerializeField] string[] _animalsItem = { "Dog", "Cat", "Hen", "Bear", "Lion", "Tiger", "Wolf", "Deer", "Cow", "Monkey", "Horse", "Zebra" };
-    [SerializeField] string[] _colorsItem = { "Red", "Blue", "Green", "Yellow", "Orange", "Pink", "Brown", "Black", "White", "Gray", "Silver", "Gold" };
-
     [Header("Array For Jumbling")]
     [SerializeField] private List<Sprite> _letterSprites = new List<Sprite>();
     [SerializeField] private List<Transform> _selectedJumbledLtr = new List<Transform>();
     [SerializeField] private List<Transform> _allJumbledLtr = new List<Transform>();
 
-    [Header("Next panel Reference")]
+    [Header("Next panel & Back Button")]
     private GameObject _nextPanel;
+    private Button _wrdBackBtn;
 
+    [Header("Boolean Flags")]
+    [SerializeField] bool _isColorSelected;
+
+    [Header("Colored Button Images")]
+    public Sprite BlueBtnSprite;
+    public Sprite GreenBtnSprite;
+    public Sprite OrangeBtnSprite;
+    public Sprite YellowBtnSprite;
+
+    [SerializeField] float _jumbleWaitTime = 4f;
+    [SerializeField] string _currentWord;
+    [SerializeField] string _currentCategory;
 
     private void Awake()
     {
-        Instance = Instance == null ? this : Instance;  // Setting Singleton Instance
+        Instance = Instance ?? this;  // Setting Singleton Instance
         if (Instance != this) Destroy(gameObject);  // If not Active Singleton, destroy it
         DontDestroyOnLoad(gameObject);  // Ensure that the Singleton persists across scene changes
 
         // Find and initialize references to various components
+        _wrdImageObject = GameObject.Find("Wor_Image_Object").GetComponent<Image>();
         _wrdContentTransform = GameObject.Find("Wrd_Panel_Content").transform;
         _wholeWordTransform = GameObject.Find("Wor_Whole_Word").transform;
         _jumbledWordTransform = GameObject.Find("Wor_Jumbled_Letter").transform;
-        _nextPanel = GameObject.Find("Wor_Final_Image");
+        _nextPanel = GameObject.Find("Wor_Next_Panel");
+        _wrdBackBtn = GameObject.Find("Wor_Words_BackButton").GetComponent<Button>();
     }
 
-    void Start()
+    private void Start()
     {
         // Set up click listeners for word categories
         Transform wrdPanel = HomeScreenMgrScript.Instance.ActivityCanvas.transform.GetChild(3);
@@ -55,9 +65,9 @@ public class WordsPanelScript : MonoBehaviour
         wrdPanel.GetChild(2).GetComponent<Button>().onClick.AddListener(() => { OnWrdFruitsBtn(); });
         wrdPanel.GetChild(3).GetComponent<Button>().onClick.AddListener(() => { OnWrdAnimalsBtn(); });
         wrdPanel.GetChild(4).GetComponent<Button>().onClick.AddListener(() => { OnWrdColorBtn(); });
-        
 
         // Attach a click listener to the "Next" button
+        _nextPanel.transform.GetChild(0).GetChild(0).GetComponent<Button>().onClick.AddListener(() => { _wrdBackBtn.onClick.Invoke(); });
         _nextPanel.transform.GetChild(0).GetChild(1).GetComponent<Button>().onClick.AddListener(() => { OnNextBtnSelection(); });
 
         // Attach a click listener to the back button
@@ -65,12 +75,36 @@ public class WordsPanelScript : MonoBehaviour
         backBtn.onClick.AddListener(() => { OnBackBtnSelection(); });
 
         // Load the whole word prefab
-        _wholeWordPrefab = Resources.Load<GameObject>("Words_Prefab/Whole_Wrd_Img");
+        _wholeWordPrefab = Resources.Load<GameObject>("Prefabs/Whole_Wrd_Img");
+        BlueBtnSprite = Resources.Load<Sprite>("Common_Images/Colored_Buttons/Blue_Btn");
+        GreenBtnSprite = Resources.Load<Sprite>("Common_Images/Colored_Buttons/Green_Btn");
+        OrangeBtnSprite = Resources.Load<Sprite>("Common_Images/Colored_Buttons/Orange_Btn");
+        YellowBtnSprite = Resources.Load<Sprite>("Common_Images/Colored_Buttons/Yellow_Btn");
 
-        // Initialize the panel with the "Foods" category
-        OnWrdFoodsBtn();
+        AdjustChildSize();
     }
 
+    private void AdjustChildSize()
+    {
+        // All numbers are default size divide by height/width to adjust size
+        // Activity Panel Child size Control
+        float width = _wrdContentTransform.GetComponent<RectTransform>().rect.width;
+        float height = _wrdContentTransform.GetComponent<RectTransform>().rect.height;
+        width = Mathf.RoundToInt(width / 5.73f);
+        height = Mathf.RoundToInt(height / 4.45f);
+        _wrdContentTransform.GetComponent<GridLayoutGroup>().cellSize = new Vector2(width, height);
+
+        // Drag & Drop Panel Child Size Control
+        float panelHeight = _wrdImageObject.transform.parent.GetChild(1).GetComponent<RectTransform>().rect.height;
+        float panelWidth = _wrdImageObject.transform.parent.GetChild(1).GetComponent<RectTransform>().rect.width;
+        float cellSize = panelHeight / 4.2f;
+        panelHeight = panelHeight - 100f;
+        panelHeight = (panelHeight > 500f) ? 500 : panelHeight;     // If greater than 500 then set 500
+        _wrdImageObject.GetComponent<RectTransform>().sizeDelta = new Vector2(panelHeight, panelHeight);
+        _jumbledWordTransform.GetComponent<GridLayoutGroup>().cellSize = new Vector2(cellSize, cellSize);
+        float spaceSize = panelWidth / 8.16f;
+        _jumbledWordTransform.GetComponent<GridLayoutGroup>().spacing = new Vector2(spaceSize, 40f);
+    }
 
     #region Main Button's Function
 
@@ -78,12 +112,13 @@ public class WordsPanelScript : MonoBehaviour
     {
         // This method is called when the "Food" button is clicked
         // Populate the word content with food-related words & Change Btn Sprite
-
-        Sprite yellowBtn = TracingMgrScript.Instance.YellowBtnSprite;
-        for (int i = 0; i < _foodsItem.Length; i++)
+        _currentCategory = "Food";
+        _isColorSelected = false;
+        string[] foodsArray = HomeScreenMgrScript.Instance.BDSO.FoodList;
+        for (int i = 0; i < foodsArray.Length; i++)
         {
-            _wrdContentTransform.GetChild(i).GetChild(0).GetComponent<TextMeshProUGUI>().text = _foodsItem[i];
-            _wrdContentTransform.GetChild(i).GetComponent<Image>().sprite = yellowBtn;
+            _wrdContentTransform.GetChild(i).GetChild(0).GetComponent<TextMeshProUGUI>().text = foodsArray[i];
+            _wrdContentTransform.GetChild(i).GetComponent<Image>().sprite = YellowBtnSprite;
         }
 
         // Start a coroutine to assign click functions to word buttons
@@ -94,12 +129,13 @@ public class WordsPanelScript : MonoBehaviour
     {
         // This method is called when the "Fruits" button is clicked
         // Populate the word content with fruit-related words
-
-        Sprite yellowBtn = TracingMgrScript.Instance.OrangeBtnSprite;
-        for (int i = 0; i < _fruitsItem.Length; i++)
+        _currentCategory = "Fruit";
+        _isColorSelected = false;
+        string[] fruitsArray = HomeScreenMgrScript.Instance.BDSO.FruitList;
+        for (int i = 0; i < fruitsArray.Length; i++)
         {
-            _wrdContentTransform.GetChild(i).GetChild(0).GetComponent<TextMeshProUGUI>().text = _fruitsItem[i];
-            _wrdContentTransform.GetChild(i).GetComponent<Image>().sprite = yellowBtn;
+            _wrdContentTransform.GetChild(i).GetChild(0).GetComponent<TextMeshProUGUI>().text = fruitsArray[i];
+            _wrdContentTransform.GetChild(i).GetComponent<Image>().sprite = OrangeBtnSprite;
         }
 
         // Start a coroutine to assign click functions to word buttons
@@ -110,12 +146,13 @@ public class WordsPanelScript : MonoBehaviour
     {
         // This method is called when the "Animals" button is clicked
         // Populate the word content with animal-related words
-
-        Sprite blueBtn = TracingMgrScript.Instance.BlueBtnSprite;
-        for (int i = 0; i < _animalsItem.Length; i++)
+        _currentCategory = "Animal";
+        _isColorSelected = false;
+        string[] animalsArray = HomeScreenMgrScript.Instance.BDSO.AnimalList;
+        for (int i = 0; i < animalsArray.Length; i++)
         {
-            _wrdContentTransform.GetChild(i).GetChild(0).GetComponent<TextMeshProUGUI>().text = _animalsItem[i];
-            _wrdContentTransform.GetChild(i).GetComponent<Image>().sprite = blueBtn;
+            _wrdContentTransform.GetChild(i).GetChild(0).GetComponent<TextMeshProUGUI>().text = animalsArray[i];
+            _wrdContentTransform.GetChild(i).GetComponent<Image>().sprite = BlueBtnSprite;
         }
 
         // Start a coroutine to assign click functions to word buttons
@@ -126,12 +163,13 @@ public class WordsPanelScript : MonoBehaviour
     {
         // This method is called when the "Color" button is clicked
         // Populate the word content with color-related words
-
-        Sprite greenBtn = TracingMgrScript.Instance.GreenBtnSprite;
-        for (int i = 0; i < _colorsItem.Length; i++)
+        _currentCategory = "Color";
+        _isColorSelected = true;
+        string[] colorsArray = HomeScreenMgrScript.Instance.BDSO.ColorList;
+        for (int i = 0; i < colorsArray.Length; i++)
         {
-            _wrdContentTransform.GetChild(i).GetChild(0).GetComponent<TextMeshProUGUI>().text = _colorsItem[i];
-            _wrdContentTransform.GetChild(i).GetComponent<Image>().sprite = greenBtn;
+            _wrdContentTransform.GetChild(i).GetChild(0).GetComponent<TextMeshProUGUI>().text = colorsArray[i];
+            _wrdContentTransform.GetChild(i).GetComponent<Image>().sprite = GreenBtnSprite;
         }
 
         // Start a coroutine to assign click functions to word buttons
@@ -145,33 +183,82 @@ public class WordsPanelScript : MonoBehaviour
 
     private void OnWordsActivity(string input)
     {
+        AnimationScript.Instance.PlayAnimation();
+
+        _currentWord = input;
+
+        //Debug.Log(input);
         // Hide the next panel (if it's visible) and show the drawing canvas
         _nextPanel.SetActive(false);
-        HomeScreenMgrScript.Instance.DragDropCanvas.transform.GetChild(0).gameObject.SetActive(true);
+        
+        _wrdImageObject.color = Color.white;
 
+        // Setting Word Image
+        if (_isColorSelected)
+        {
+            string[] colorArray = HomeScreenMgrScript.Instance.BDSO.ColorList;
+            string hexCode = null; // Initialize hexCode with null in case no match is found
+
+            for (int i = 0; i < colorArray.Length; i++)
+            {
+                if (input == colorArray[i])
+                {
+                    hexCode = HomeScreenMgrScript.Instance.BDSO.HexCodeList[i];
+                    break;
+                }
+            }
+ 
+            Sprite wrdImage = Resources.Load<Sprite>("Circle");
+            _wrdImageObject.sprite = wrdImage;
+
+            if (hexCode != null)
+            {
+                Color newColor;
+                if (ColorUtility.TryParseHtmlString(hexCode, out newColor))
+                {
+                    _wrdImageObject.color = newColor;
+                }
+                else
+                {
+                    Debug.LogError("Invalid hex color code: " + hexCode);
+                }
+            }
+            else
+            {
+                Debug.LogError("No matching color found for input: " + input);
+            }
+        }
+        else
+        {
+            Sprite wrdImage = Resources.Load< Sprite>("AllObjectImages/" + input);
+            _wrdImageObject.sprite = wrdImage;
+        }
+        HomeScreenMgrScript.Instance.DragDropCanvas.transform.GetChild(0).gameObject.SetActive(true);
         // Hide the jumbled word panel and instantiate the whole word images
         _jumbledWordTransform.gameObject.SetActive(false);
         foreach (char letter in input)
         {
             GameObject go = Instantiate(_wholeWordPrefab, _wholeWordTransform);
-            Sprite sprite = Resources.Load<Sprite>("Words_Prefab/All_Letters/" + letter);
+            Sprite sprite = Resources.Load<Sprite>("Letters/Capital_Letters/" + letter.ToString().ToLower());
             _letterSprites.Add(sprite);
             go.GetComponent<Image>().sprite = sprite;
         }
 
-        // Invoke methods to jumble and initiate jumbled letters
-        Invoke("OnJumbleLetterSelect", 2f);
-        Invoke("OnInitiateJumbledLtr", 5f);
+        // Start Coroutine to jumble and initiate jumbled letters
+        StartCoroutine(OnJumbleLetterSelect());
+        StartCoroutine(OnInitiateJumbledLtr());
     }
 
-    private void OnInitiateJumbledLtr()
+    private IEnumerator OnInitiateJumbledLtr()
     {
+        yield return new WaitForSeconds(_jumbleWaitTime);
         // Show the jumbled word panel
         _jumbledWordTransform.gameObject.SetActive(true);
 
         // Assign Jumbled Letter Sprites to the selected jumbled letter positions
         for (int i = 0; i < _letterSprites.Count; i++)
         {
+            yield return new WaitForEndOfFrame();
             _selectedJumbledLtr[i].GetComponent<Image>().sprite = _letterSprites[i];
             _selectedJumbledLtr[i].GetComponent<Image>().color = new Color32(255, 255, 255, 255);
             _selectedJumbledLtr[i].GetComponent<CanvasGroup>().blocksRaycasts = true;
@@ -180,18 +267,24 @@ public class WordsPanelScript : MonoBehaviour
         // Reduce the alpha of letters in the whole word panel
         foreach (Transform t in _wholeWordTransform)
         {
+            yield return new WaitForEndOfFrame();
             t.GetComponent<Image>().color = new Color32(255, 255, 255, 100);
         }
     }
 
-    private void OnJumbleLetterSelect()
+    private IEnumerator OnJumbleLetterSelect()
     {
+        yield return new WaitForEndOfFrame();
         // Populate the list of child transforms.
         foreach (Transform child in _jumbledWordTransform)
         {
             _allJumbledLtr.Add(child);
+            yield return new WaitForEndOfFrame();
         }
 
+        yield return new WaitForEndOfFrame();
+        yield return new WaitForEndOfFrame();
+        yield return new WaitForEndOfFrame();
         // Randomly select images without repeats.
         for (int i = 0; i < _letterSprites.Count; i++)
         {
@@ -226,7 +319,7 @@ public class WordsPanelScript : MonoBehaviour
 
     private void OnBackBtnSelection()
     {
-        StopCoroutine(OnAssignSubBtnFunction());
+        StopAllCoroutines();
 
         if (_wholeWordTransform.childCount > 0)
         {
@@ -267,11 +360,46 @@ public class WordsPanelScript : MonoBehaviour
 
     private void OnNextBtnSelection()
     {
+        OnBackBtnSelection();
+
         // Hide the "Next" panel to allow the user to continue the activity
         _nextPanel.SetActive(false);
+        string[] categoryList;
 
-        // Additional functionality or actions can be added here when the "Next" button is clicked.
-        // For example, you can transition to the next part of the activity or perform other relevant tasks.
+        switch (_currentCategory)
+        {
+            case "Food":
+                categoryList = HomeScreenMgrScript.Instance.BDSO.FoodList;
+                break;
+            case "Fruit":
+                categoryList = HomeScreenMgrScript.Instance.BDSO.FruitList;
+                break;
+            case "Animal":
+                categoryList = HomeScreenMgrScript.Instance.BDSO.AnimalList;
+                break;
+            case "Color":
+                categoryList = HomeScreenMgrScript.Instance.BDSO.ColorList;
+                break;
+            default:
+                categoryList = HomeScreenMgrScript.Instance.BDSO.FoodList;
+                break;
+        }
+
+        for (int i = 0; i < categoryList.Length; i++)
+        {
+            if (_currentWord == categoryList[i])
+            {
+                if (i == categoryList.Length - 1)
+                {
+                    _currentWord = categoryList[0];
+                    break;
+                }
+                _currentWord = categoryList[i+1];
+                break;
+            }
+        }
+
+        OnWordsActivity(_currentWord);
     }
 
     #endregion

@@ -1,40 +1,28 @@
 {
     "logs": [
         {
-            "outputFile": "E:\\Unity Projects\\E Learning For Kids\\Library\\Bee\\Android\\Prj\\Mono2x\\Gradle\\launcher\\build\\intermediates\\res\\merged\\release\\values-v28_values-v28.arsc.flat",
+            "outputFile": "E:\\Unity Projects\\Kinder Quest\\Library\\Bee\\Android\\Prj\\Mono2x\\Gradle\\launcher\\build\\intermediates\\res\\merged\\release\\values_values.arsc.flat",
             "map": [
                 {
-                    "source": "E:\\Unity Projects\\E Learning For Kids\\Library\\Bee\\Android\\Prj\\Mono2x\\Gradle\\launcher\\src\\main\\res\\values-v28\\styles.xml",
+                    "source": "E:\\Unity Projects\\Kinder Quest\\Library\\Bee\\Android\\Prj\\Mono2x\\Gradle\\launcher\\src\\main\\res\\values\\strings.xml",
                     "from": {
-                        "startLines": "2",
-                        "startColumns": "0",
-                        "startOffsets": "53",
-                        "endLines": "4",
-                        "endColumns": "8",
-                        "endOffsets": "229"
+                        "startLines": "2,3",
+                        "startColumns": "2,2",
+                        "startOffsets": "55,103",
+                        "endColumns": "46,65",
+                        "endOffsets": "99,166"
                     },
                     "to": {
-                        "startLines": "2",
-                        "startColumns": "4",
-                        "startOffsets": "55",
-                        "endLines": "4",
-                        "endColumns": "8",
-                        "endOffsets": "229"
+                        "startLines": "8,9",
+                        "startColumns": "4,4",
+                        "startOffsets": "356,405",
+                        "endColumns": "48,67",
+                        "endOffsets": "400,468"
                     }
-                }
-            ]
-        },
-        {
-            "outputFile": "E:\\Unity Projects\\E Learning For Kids\\Library\\Bee\\Android\\Prj\\Mono2x\\Gradle\\launcher\\build\\intermediates\\res\\merged\\release\\values_values.arsc.flat",
-            "map": [
+                },
                 {
-                    "source": "E:\\Unity Projects\\E Learning For Kids\\Library\\Bee\\Android\\Prj\\Mono2x\\Gradle\\unityLibrary\\build\\intermediates\\packaged_res\\release\\values\\values.xml",
+                    "source": "E:\\Unity Projects\\Kinder Quest\\Library\\Bee\\Android\\Prj\\Mono2x\\Gradle\\unityLibrary\\build\\intermediates\\packaged_res\\release\\values\\values.xml",
                     "from": {
-                        "startLines": "-1,-1,-1,-1,-1,-1",
-                        "startColumns": "-1,-1,-1,-1,-1,-1",
-                        "startOffsets": "-1,-1,-1,-1,-1,-1"
-                    },
-                    "to": {
                         "startLines": "2,3,4,5,6,7",
                         "startColumns": "4,4,4,4,4,4",
                         "startOffsets": "55,101,158,214,263,309",
@@ -43,60 +31,31 @@
                     }
                 },
                 {
-                    "source": "E:\\Unity Projects\\E Learning For Kids\\Library\\Bee\\Android\\Prj\\Mono2x\\Gradle\\launcher\\src\\main\\res\\values\\strings.xml",
+                    "source": "E:\\Unity Projects\\Kinder Quest\\Library\\Bee\\Android\\Prj\\Mono2x\\Gradle\\launcher\\src\\main\\res\\values\\styles.xml",
                     "from": {
-                        "startLines": "2,-1",
-                        "startColumns": "2,-1",
-                        "startOffsets": "55,-1",
-                        "endColumns": "41,-1",
-                        "endOffsets": "94,-1"
-                    },
-                    "to": {
-                        "startLines": "8,9",
-                        "startColumns": "4,4",
-                        "startOffsets": "356,400",
-                        "endColumns": "43,67",
-                        "endOffsets": "395,463"
-                    }
-                },
-                {
-                    "source": "E:\\Unity Projects\\E Learning For Kids\\Library\\Bee\\Android\\Prj\\Mono2x\\Gradle\\launcher\\src\\main\\res\\values\\styles.xml",
-                    "from": {
-                        "startLines": "-1,-1,-1",
-                        "startColumns": "-1,-1,-1",
-                        "startOffsets": "-1,-1,-1"
+                        "startLines": "5,2,7",
+                        "startColumns": "0,0,0",
+                        "startOffsets": "190,53,288",
+                        "endLines": "6,4,10",
+                        "endColumns": "8,8,8",
+                        "endOffsets": "286,188,513"
                     },
                     "to": {
                         "startLines": "10,12,15",
                         "startColumns": "4,4,4",
-                        "startOffsets": "468,568,706",
+                        "startOffsets": "473,573,711",
                         "endLines": "11,14,18",
                         "endColumns": "8,8,8",
-                        "endOffsets": "563,701,928"
+                        "endOffsets": "568,706,933"
                     }
                 }
             ]
         },
         {
-            "outputFile": "E:\\Unity Projects\\E Learning For Kids\\Library\\Bee\\Android\\Prj\\Mono2x\\Gradle\\launcher\\build\\intermediates\\res\\merged\\release\\values-v30_values-v30.arsc.flat",
+            "outputFile": "E:\\Unity Projects\\Kinder Quest\\Library\\Bee\\Android\\Prj\\Mono2x\\Gradle\\launcher\\build\\intermediates\\res\\merged\\release\\values-v21_values-v21.arsc.flat",
             "map": [
                 {
-                    "source": "E:\\Unity Projects\\E Learning For Kids\\Library\\Bee\\Android\\Prj\\Mono2x\\Gradle\\unityLibrary\\build\\intermediates\\packaged_res\\release\\values-v30\\values-v30.xml",
-                    "from": {
-                        "startLines": "2,3,4,5,6",
-                        "startColumns": "4,4,4,4,4",
-                        "startOffsets": "55,129,201,266,325",
-                        "endColumns": "73,71,64,58,60",
-                        "endOffsets": "124,196,261,320,381"
-                    }
-                }
-            ]
-        },
-        {
-            "outputFile": "E:\\Unity Projects\\E Learning For Kids\\Library\\Bee\\Android\\Prj\\Mono2x\\Gradle\\launcher\\build\\intermediates\\res\\merged\\release\\values-v21_values-v21.arsc.flat",
-            "map": [
-                {
-                    "source": "E:\\Unity Projects\\E Learning For Kids\\Library\\Bee\\Android\\Prj\\Mono2x\\Gradle\\launcher\\src\\main\\res\\values-v21\\styles.xml",
+                    "source": "E:\\Unity Projects\\Kinder Quest\\Library\\Bee\\Android\\Prj\\Mono2x\\Gradle\\launcher\\src\\main\\res\\values-v21\\styles.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "0",
@@ -112,6 +71,45 @@
                         "endLines": "3",
                         "endColumns": "8",
                         "endOffsets": "154"
+                    }
+                }
+            ]
+        },
+        {
+            "outputFile": "E:\\Unity Projects\\Kinder Quest\\Library\\Bee\\Android\\Prj\\Mono2x\\Gradle\\launcher\\build\\intermediates\\res\\merged\\release\\values-v28_values-v28.arsc.flat",
+            "map": [
+                {
+                    "source": "E:\\Unity Projects\\Kinder Quest\\Library\\Bee\\Android\\Prj\\Mono2x\\Gradle\\launcher\\src\\main\\res\\values-v28\\styles.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "0",
+                        "startOffsets": "53",
+                        "endLines": "4",
+                        "endColumns": "8",
+                        "endOffsets": "229"
+                    },
+                    "to": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "4",
+                        "endColumns": "8",
+                        "endOffsets": "229"
+                    }
+                }
+            ]
+        },
+        {
+            "outputFile": "E:\\Unity Projects\\Kinder Quest\\Library\\Bee\\Android\\Prj\\Mono2x\\Gradle\\launcher\\build\\intermediates\\res\\merged\\release\\values-v30_values-v30.arsc.flat",
+            "map": [
+                {
+                    "source": "E:\\Unity Projects\\Kinder Quest\\Library\\Bee\\Android\\Prj\\Mono2x\\Gradle\\unityLibrary\\build\\intermediates\\packaged_res\\release\\values-v30\\values-v30.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6",
+                        "startColumns": "4,4,4,4,4",
+                        "startOffsets": "55,129,201,266,325",
+                        "endColumns": "73,71,64,58,60",
+                        "endOffsets": "124,196,261,320,381"
                     }
                 }
             ]

@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -8,30 +9,26 @@ public class TracingMgrScript : MonoBehaviour, IBeginDragHandler, IDragHandler, 
     [Header("Singleton Reference")]
     public static TracingMgrScript Instance;
 
-    [Header("Button Images")]
-    public Sprite BlueBtnSprite;
-    public Sprite GreenBtnSprite;
-    public Sprite OrangeBtnSprite;
-    public Sprite YellowBtnSprite;
-
     [Header("Tracing Panel Components")]
     [SerializeField] Transform _tracingCanvas;
     [SerializeField] Transform _prefabHolder;
     [SerializeField] Image _maskImage;
     [SerializeField] Image _dragHandlerImg;
-    [SerializeField] Image _finalImage;
-    [SerializeField] Button _nextButton;
+    [SerializeField] GameObject _nextPanel;
     [SerializeField] Button _tracingBackButton;
 
     [Header("Required Parameters")]
     [SerializeField] Transform[] _bezierControlPoints; // Reference to Bezier control points
     [SerializeField] float _bezierClosestPoint;
+    [SerializeField] Vector2 _startingPosition;
     [SerializeField] Vector2 _previousPosition;
     [SerializeField] Texture2D _maskImgTexture;
     [SerializeField] Slider _currentSlider;
     [SerializeField] int _strokeNum;
     [SerializeField] int _currentStroke;
     [SerializeField] bool isDrawingAllowed;
+    [SerializeField] float _sliderAdjustValue = 0.01f;
+    [SerializeField] string _currentlyTracing;
 
 
     private void Awake()
@@ -43,22 +40,16 @@ public class TracingMgrScript : MonoBehaviour, IBeginDragHandler, IDragHandler, 
         _prefabHolder = GameObject.Find("Tracing_PrefabHolder").transform;
         _maskImage = GameObject.Find("Tracing_Mask_Image").GetComponent<Image>();
         _dragHandlerImg = GameObject.Find("Tracing_Drag_Handler").GetComponent<Image>();
-        _finalImage = GameObject.Find("Tracing_Final_Image").GetComponent<Image>();
-        _nextButton = GameObject.Find("Tracing_NextButton").GetComponent<Button>();
+        _nextPanel = GameObject.Find("Tracing_Next_Panel");
         _tracingBackButton = GameObject.Find("Tracing_BackButton").GetComponent<Button>();
     }
 
     private void Start()
     {
-        // Loading Sprite from Resources
-        BlueBtnSprite = Resources.Load<Sprite>("UI/Tracing/Sub_Btn_Blue");
-        GreenBtnSprite = Resources.Load<Sprite>("UI/Tracing/Sub_Btn_Green");
-        OrangeBtnSprite = Resources.Load<Sprite>("UI/Tracing/Sub_Btn_Orange");
-        YellowBtnSprite = Resources.Load<Sprite>("UI/Tracing/Sub_Btn_yellow");
-
         // Assign click event handlers to buttons
         _tracingBackButton.onClick.AddListener(() => { OnTracingBackButton(); });
-        _nextButton.onClick.AddListener(() => { OnTracingNextButton(); });
+        _nextPanel.transform.GetChild(0).GetChild(0).GetComponent<Button>().onClick.AddListener(() => { _tracingBackButton.onClick.Invoke(); });
+        _nextPanel.transform.GetChild(0).GetChild(1).GetComponent<Button>().onClick.AddListener(() => { OnTracingNextButton(); });
 
         // Deactiviting all Components of Tracing Canvas
         OnTracingBackButton();
@@ -66,14 +57,15 @@ public class TracingMgrScript : MonoBehaviour, IBeginDragHandler, IDragHandler, 
 
     public void OnStartTracing(string input)
     {
+        _currentlyTracing = input;
+
+        AnimationScript.Instance.PlayAnimation();
+
         // Activating Tracing Components
         OnActivateTracingComponent();
 
         // Getting Sprite and prefab from resources folder.
         OnGettingResources(input);
-
-        // setting position of drag Handler & Bezier Points 
-        OnTracingInitiate();
     }
 
 
@@ -86,8 +78,9 @@ public class TracingMgrScript : MonoBehaviour, IBeginDragHandler, IDragHandler, 
         {
             t.gameObject.SetActive(true);
         }
-        _finalImage.gameObject.SetActive(false);
-        _nextButton.gameObject.SetActive(false);
+        _nextPanel.SetActive(false);
+        GetComponent<Image>().color = new Color32(255, 255, 255, 255);
+        GetComponent<Image>().raycastTarget = true;
     }
 
     private void OnTracingBackButton()
@@ -100,6 +93,9 @@ public class TracingMgrScript : MonoBehaviour, IBeginDragHandler, IDragHandler, 
         {
             t.gameObject.SetActive(false);
         }
+        gameObject.SetActive(true);
+        GetComponent<Image>().color = new Color32(255, 255, 255, 0);
+        GetComponent<Image>().raycastTarget = false;
     }
 
     #endregion
@@ -110,11 +106,25 @@ public class TracingMgrScript : MonoBehaviour, IBeginDragHandler, IDragHandler, 
     private void OnGettingResources(string input)
     {
         // Getting Sprite and prefab from resources folder and Activitaing Them.
-        _maskImage.sprite = Resources.Load<Sprite>("Tracing_Images/Mask/" + input);
-        _dragHandlerImg.sprite = Resources.Load<Sprite>("Tracing_Images/Dragger/" + input);
-        _finalImage.sprite = Resources.Load<Sprite>("Tracing_Images/FinalImage/" + input);
-        GameObject prefab = Resources.Load<GameObject>("Tracing_Prefab/" + input);
-        Instantiate(prefab, _prefabHolder);
+        Sprite maskImg = Resources.Load<Sprite>("Tracing_Mask_Image/" + input);
+        _maskImage.sprite = maskImg ?? maskImg;
+
+        string dragHandlerName = GetDraggerName(input);
+        Sprite dragImg = Resources.Load<Sprite>("AllObjectImages/" + dragHandlerName);
+        _dragHandlerImg.sprite = dragImg ?? dragImg;
+
+        //_finalImage.sprite = Resources.Load<Sprite>("Tracing_Images/FinalImage/" + input);
+
+        GameObject prefab = Resources.Load<GameObject>("Bezier_Prefabs/" + input);
+        if (prefab != null)
+        {
+            GameObject go = Instantiate((prefab != null) ? prefab : null, _prefabHolder);
+            Vector3 scaleFactor = CalculateScaleFactor();
+            go.GetComponent<RectTransform>().localScale = scaleFactor;
+        }
+
+        // setting position of drag Handler & Bezier Points 
+        OnTracingInitiate();
     }
 
     private void OnTracingInitiate()
@@ -145,6 +155,55 @@ public class TracingMgrScript : MonoBehaviour, IBeginDragHandler, IDragHandler, 
         }
     }
 
+    private string GetDraggerName(string input)
+    {
+        string result = null;
+
+        if (input.Substring(0, 3) == "Cap" || input.Substring(0, 3) == "Sma")
+        {
+            string[] alphabetArray = HomeScreenMgrScript.Instance.BDSO.AllAlphabet;
+            for (int i = 0; i < alphabetArray.Length; i++)
+            {
+                if (input.Substring(4) == alphabetArray[i])
+                {
+                    int a = i;
+                    result = HomeScreenMgrScript.Instance.BDSO.AlphabetList[a];
+                    return result;
+                }
+            }
+        }
+        else
+        {
+            // Randomly select one of the four arrays
+            string[] selectedArray = GetRandomArray();
+
+            // Check if the selected array is not null and has at least one element
+            result = (selectedArray != null && selectedArray.Length > 0) ? selectedArray[Random.Range(0, selectedArray.Length)] : null;
+        }
+
+        return result;
+    }
+
+    private string[] GetRandomArray()
+    {
+        // Generate a random number from 1 to 4 to select one of the arrays
+        int randomIndex = Random.Range(1, 5);
+
+        switch (randomIndex)
+        {
+            case 1:
+                return HomeScreenMgrScript.Instance.BDSO.FoodList;
+            case 2:
+                return HomeScreenMgrScript.Instance.BDSO.AnimalList;
+            case 3:
+                return HomeScreenMgrScript.Instance.BDSO.FruitList;
+            case 4:
+                return HomeScreenMgrScript.Instance.BDSO.ExtrasList;
+            default:
+                return null; // In case something goes wrong
+        }
+    }
+
     #endregion
 
 
@@ -154,6 +213,7 @@ public class TracingMgrScript : MonoBehaviour, IBeginDragHandler, IDragHandler, 
     {
         // Record the initial position of the pointer when dragging starts
         _previousPosition = eventData.position;
+        _startingPosition = transform.position;
 
         // Calculate the closest point on the Bezier curve to the initial pointer position
         _bezierClosestPoint = GetClosestPointOnBezier(eventData.position);
@@ -179,7 +239,8 @@ public class TracingMgrScript : MonoBehaviour, IBeginDragHandler, IDragHandler, 
             _previousPosition = eventData.position;
 
             // Setting the Slider
-            _currentSlider.value = _bezierClosestPoint + 0.1f;
+            //_currentSlider.value = _bezierClosestPoint + 0.1f;
+            _currentSlider.value = _bezierClosestPoint + _sliderAdjustValue;
         }
     }
 
@@ -189,16 +250,21 @@ public class TracingMgrScript : MonoBehaviour, IBeginDragHandler, IDragHandler, 
         if (_currentSlider.value >= 0.95f)
         {
             //TracingMgrScript.Instance.audioSource.Stop();
+            _currentSlider.value = 1f;
             _currentStroke++;
             if (_currentStroke! > _strokeNum)
             {
                 _dragHandlerImg.gameObject.SetActive(false);
-                _finalImage.gameObject.SetActive(true);
-                _nextButton.gameObject.SetActive(true);
+                _nextPanel.SetActive(true);
                 //UnlockingNextTracingLtr();
                 return;
             }
             OnNextStrokeSelection(_currentStroke);
+        }
+        else
+        {
+            _currentSlider.value = 0f;
+            transform.position = _startingPosition;
         }
     }
 
@@ -288,6 +354,27 @@ public class TracingMgrScript : MonoBehaviour, IBeginDragHandler, IDragHandler, 
         }
     }
 
+    private Vector3 CalculateScaleFactor()
+    {
+        // Calculate scale factor based on screen size or other criteria
+        float screenWidth = Screen.width;
+        float screenHeight = Screen.height;
+
+        // Calculate your scaling logic based on the current screen size
+        // For example, you might use a ratio of screen width/height to adjust the scale
+        // Here, I'm assuming a fixed aspect ratio of 16:9 (1920x1080)
+        float targetWidth = 1920f;
+        float targetHeight = 1080f;
+
+        float scaleFactorWidth = screenWidth / targetWidth;
+        float scaleFactorHeight = screenHeight / targetHeight;
+
+        // Use the smaller of the two scale factors to maintain aspect ratio
+        Vector3 scaleFactor = new Vector3(scaleFactorWidth, scaleFactorHeight, 1f);
+
+        return scaleFactor;
+    }
+
     #endregion
 
 
@@ -313,8 +400,74 @@ public class TracingMgrScript : MonoBehaviour, IBeginDragHandler, IDragHandler, 
 
     private void OnTracingNextButton()
     {
-        Debug.Log("Next");
+        OnTracingBackButton();
+        StartCoroutine(WaitTime());
+        
+
+        IEnumerator WaitTime()
+        {
+            yield return new WaitForEndOfFrame();
+            OnActivateTracingComponent();
+            yield return new WaitForEndOfFrame();
+            yield return new WaitForEndOfFrame();
+            yield return new WaitForEndOfFrame();
+            string currentCategory = _currentlyTracing.Substring(0, 3);
+            string currentObject = _currentlyTracing.Substring(_currentlyTracing.Length - 1);
+            string newString = _currentlyTracing.Substring(0, _currentlyTracing.Length - 1);
+            string[] alphaArr = HomeScreenMgrScript.Instance.BDSO.AllAlphabet;
+
+            switch (currentCategory)
+            {
+                case "Lcs":
+                    int Lcs = int.Parse(currentObject);
+                    Lcs++;
+                    if (Lcs > 8)
+                    {
+                        Lcs = 1;
+                    }
+
+                    newString = newString + Lcs;
+                    _currentlyTracing = newString;
+
+                    break;
+                case "Cap":
+                case "Sma":
+                    if (currentObject == "Z")
+                    {
+                        _currentlyTracing = newString + "A";
+                        break;
+                    }
+
+                    for (int i = 0; i < alphaArr.Length; i++)
+                    {
+                        if (currentObject == alphaArr[i])
+                        {
+                            newString = newString + alphaArr[i + 1];
+                            _currentlyTracing = newString;
+                        }
+                    }
+                    break;
+                case "Num":
+                    int num = int.Parse(currentObject);
+                    num++;
+
+                    if (num > 20)
+                    {
+                        num = 0;
+                    }
+
+                    newString = newString + num;
+                    _currentlyTracing = newString;
+
+                    break;
+                default: break;
+            }
+
+            OnStartTracing(_currentlyTracing);
+        }
     }
+
+
 
     #endregion
 }

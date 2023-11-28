@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
@@ -19,8 +20,9 @@ public class PopTheBubblePanelScript : MonoBehaviour
     [SerializeField] Button _ptbBackButton;
 
     [Header("TextmeshPro")]
-    [SerializeField] TextMeshProUGUI _tmproText;
-    [SerializeField] TextMeshProUGUI _tmproScore;
+    [SerializeField] TextMeshProUGUI _headerText;
+    [SerializeField] TextMeshProUGUI _startSequence;
+    [SerializeField] TextMeshProUGUI _scoreText;
 
     [Header("Canvas Components")]
     public RectTransform CanvasRect;
@@ -28,24 +30,30 @@ public class PopTheBubblePanelScript : MonoBehaviour
     private float _canvasHeight;
 
     [Header("Bubble Components")]
+    private Image _selectedbubble;
     private string _selectedChar;
-    private float _spawnInterval = 2;
+    private Color _selectedColor;
+    private float _spawnInterval = 1.5f;
     public float Padding = 150f;
     public float UpwardForce = 150f; // Adjust the force as needed
 
-    [Header("Array;s reference")]
-    private Color[] _colours = {Color.black, Color.blue, Color.cyan, Color.gray, Color.green, Color.grey, Color.magenta, Color.red, Color.white, Color.yellow };
-    private char[] _alphabets = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray();
-    private string[] _numbers = {"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20"};
-
     [Header("Properties reference")]
     int _score;
-    int _turn;
+    float _bubbleChangeTimer = 30f;
 
+    [Header("Enum")]
+    public AllBubbleStates _bubbleState;
+
+    public enum AllBubbleStates
+    {
+        ColorBubble,
+        AlphabetBubble,
+        NumberBubble
+    }
 
     private void Awake()
     {
-        Instance = Instance == null ? this : Instance;  // Setting Singleton Instance
+        Instance = Instance ?? this;  // Setting Singleton Instance
         if (Instance != this) Destroy(gameObject);  // If not Active Singleton, destroy it
         DontDestroyOnLoad(gameObject);  // Ensure that the Singleton persists across scene changes
 
@@ -55,15 +63,17 @@ public class PopTheBubblePanelScript : MonoBehaviour
         _ptbAlphabetsBtn = GameObject.Find("ptb_Alphabets_Btn").GetComponent<Button>();
         _ptbNumbersBtn = GameObject.Find("ptb_Numbers_Btn").GetComponent<Button>();
         _ptbBackButton = GameObject.Find("Ptb_BackButton").GetComponent<Button>();
-        _tmproText = GameObject.Find("ptb_tmpro_Text").GetComponent<TextMeshProUGUI>();
-        _tmproScore = GameObject.Find("ptb_tmpro_Text_1").GetComponent<TextMeshProUGUI>();
+        _headerText = GameObject.Find("ptb_Header_Text").GetComponent<TextMeshProUGUI>();
+        _startSequence = GameObject.Find("ptb_StartSequence_Text").GetComponent<TextMeshProUGUI>();
+        _scoreText = GameObject.Find("ptb_Score_Text").GetComponent<TextMeshProUGUI>();
+        _selectedbubble = GameObject.Find("ptb_Selected_Bubble").GetComponent<Image>();
     }
 
 
-    void Start()
+    private void Start()
     {
         // Load the bubble prefab from the Resources folder
-        _bubblePrefab = Resources.Load<GameObject>("Bubble_Prefab/Bubble_Prefab");
+        _bubblePrefab = Resources.Load<GameObject>("Prefabs/Bubble_Prefab");
 
         // Attach event listeners to buttons
         _ptbColourBtn.onClick.AddListener(() => { OnPtbColoursBtn(); });
@@ -85,47 +95,62 @@ public class PopTheBubblePanelScript : MonoBehaviour
 
     private void OnPtbColoursBtn()
     {
-        // Activate all child objects within the PopTheBubbleCanvas
-        foreach (Transform t in HomeScreenMgrScript.Instance.PopTheBubbleCanvas.transform)
-        {
-            t.gameObject.SetActive(true);
-        }
+        _bubbleState = AllBubbleStates.ColorBubble;
 
-        // Initialize game variables for the color mode
-        StartCoroutine(OnColorsDeploy());
+        // Activate all child objects within the PopTheBubbleCanvas
+        OnActivatePanelComponent(true);
+
+        // Reset the player's score
+        _score = 0;
+        _scoreText.text = "Score: " + _score;
+
+        //StartCoroutine(OnColorsDeploy());
+        OnNewBubbleGameStart();
     }
 
     private void OnPtbAphabetsBtn()
     {
-        // Activate all child objects within the PopTheBubbleCanvas
-        foreach (Transform t in HomeScreenMgrScript.Instance.PopTheBubbleCanvas.transform)
-        {
-            t.gameObject.SetActive(true);
-        }
+        _bubbleState = AllBubbleStates.AlphabetBubble;
 
-        // Initialize game variables for the alphabets mode
-        StartCoroutine(OnAlphabetDeploy());
+        // Activate all child objects within the PopTheBubbleCanvas
+        OnActivatePanelComponent(true);
+
+        // Reset the player's score
+        _score = 0;
+        _scoreText.text = "Score: " + _score;
+
+        //StartCoroutine(OnAlphabetDeploy());
+        OnNewBubbleGameStart();
     }
 
     private void OnPtbNumbersBtn()
     {
+        _bubbleState = AllBubbleStates.NumberBubble;
+
+        // Activate all child objects within the PopTheBubbleCanvas
+        OnActivatePanelComponent(true);
+
+        // Reset the player's score
+        _score = 0;
+        _scoreText.text = "Score: " + _score;
+
+        //StartCoroutine(OnNumbersDeploy());
+        OnNewBubbleGameStart();
+    }
+
+    private void OnActivatePanelComponent(bool inputBool)
+    {
         // Activate all child objects within the PopTheBubbleCanvas
         foreach (Transform t in HomeScreenMgrScript.Instance.PopTheBubbleCanvas.transform)
         {
-            t.gameObject.SetActive(true);
+            t.gameObject.SetActive(inputBool);
         }
-
-        // Initialize game variables for the numbers mode
-        StartCoroutine(OnNumbersDeploy());
     }
 
     private void OnPtbBackButton()
     {
         // Deactivate all child objects within the PopTheBubbleCanvas
-        foreach (Transform t in HomeScreenMgrScript.Instance.PopTheBubbleCanvas.transform)
-        {
-            t.gameObject.SetActive(false);
-        }
+        OnActivatePanelComponent(false);
 
         // If there are bubbles in the scene, destroy them
         if (_bubbleParent.childCount > 0)
@@ -136,47 +161,44 @@ public class PopTheBubblePanelScript : MonoBehaviour
             }
         }
 
-        // Stop all running coroutines
+        // Stop all running coroutines & InvokeRepeating
         StopAllCoroutines();
+        CancelInvoke(nameof(ChangingTheBubble));
     }
 
     #endregion
 
 
-    #region Bubble Functions
+    #region Bubble Spawn Functions
 
-    private void ToSpawnBubble(string bubbleText)
+    private void BubbleSpawn(string bubbleText, Color color)
+    //private void BubbleSpawn(string bubbleText, Color color)
     {
         // Set a random X position within the canvas width
         float width = _canvasWidth / 2;
-        float randomX = Random.Range(-(width-350), width-150);
+        float randomX = UnityEngine.Random.Range(-(width - 350), width - 150);
 
         // Set the Y position at the bottom of the canvas
-        float randomY = -((_canvasHeight/2) + Padding); // You can adjust this if you want some padding from the bottom
+        float randomY = -((_canvasHeight / 2) + Padding); // You can adjust this if you want some padding from the bottom
+
+        int r = Mathf.RoundToInt(color.r * 255);
+        int g = Mathf.RoundToInt(color.g * 255);
+        int b = Mathf.RoundToInt(color.b * 255);
+        int a = Mathf.RoundToInt(color.a * 255);
 
         // Create an instance of the image prefab
         GameObject newBubble = Instantiate(_bubblePrefab, _bubbleParent);
-        newBubble.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = bubbleText;
 
-        // Set the position of the instantiated image
-        RectTransform imageRect = newBubble.GetComponent<RectTransform>();
-        imageRect.anchoredPosition = new Vector2(randomX, randomY);
-    }
-    
-    private void ToSpawnColorBubble(Color input)
-    {
-        // Set a random X position within the canvas width
-        float width = _canvasWidth / 2;
-        float randomX = Random.Range(-(width-350), width-150);
-
-        // Set the Y position at the bottom of the canvas
-        float randomY = -((_canvasHeight/2) + Padding); // You can adjust this if you want some padding from the bottom
-
-        // Create an instance of the image prefab
-        GameObject newBubble = Instantiate(_bubblePrefab, _bubbleParent);
-        newBubble.GetComponent<Image>().color = input;
-        newBubble.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = ConvertColorToString(input);
-        newBubble.transform.GetChild(0).GetComponent<TextMeshProUGUI>().color = new Color32(255, 255, 255, 0);
+        if (_bubbleState == AllBubbleStates.ColorBubble)
+        {
+            newBubble.GetComponent<Image>().color = color;
+            newBubble.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = bubbleText;
+            newBubble.transform.GetChild(0).GetComponent<TextMeshProUGUI>().color = new Color32(255, 255, 255, 0);
+        }
+        else
+        {
+            newBubble.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = bubbleText;
+        }
 
         // Set the position of the instantiated image
         RectTransform imageRect = newBubble.GetComponent<RectTransform>();
@@ -190,273 +212,183 @@ public class PopTheBubblePanelScript : MonoBehaviour
         {
             // Increase the player's score and update the score display
             _score++;
-            _tmproScore.text = "Score: " + _score;
-
-            // Check if the player has reached a score of 10 to complete the game
-            if (_score >= 10)
-                Debug.Log("Complete"); // Output a message to indicate completion
-                StopAllCoroutines(); // Stop all coroutines to end the game
+            _scoreText.text = "Score: " + _score;
         }
     }
 
     #endregion
 
 
-    #region Colors Selection
+    #region Random Selection Functions
 
-    private IEnumerator OnColorsDeploy()
-    {
-        Color[] _optionsArr = new Color[3]; // Array to store color options
-        Color selectedColor = GetRandomColor(); // Get a random color
-        _selectedChar = ConvertColorToString(selectedColor); // Set the selected color as the target
-        _score = 0; // Reset the player's score
-        _turn = 0; // Initialize the turn counter
-
-        // Display game instructions
-        _tmproText.text = "Click On The " + _selectedChar + " Bubble";
-        _tmproScore.text = "Wait";
-
-        // Countdown before starting the game
-        yield return new WaitForSeconds(1);
-        _tmproScore.text = "3";
-        yield return new WaitForSeconds(1);
-        _tmproScore.text = "2";
-        yield return new WaitForSeconds(1);
-        _tmproScore.text = "1";
-        yield return new WaitForSeconds(1);
-        _tmproScore.text = "Start";
-
-        // Display the player's score and spawn bubbles
-        yield return new WaitForSeconds(1);
-        _tmproScore.text = "Score: ";
-
-        while (_score < 10)
-        {
-            if (_turn == 0)
-            {
-                // Spawn a bubble with the selected color
-                ToSpawnColorBubble(_optionsArr[0]);
-                _turn++;
-            }
-            else if (_turn == 1)
-            {
-                // Spawn two bubbles with random colors
-                ToSpawnColorBubble(_optionsArr[1]);
-                yield return new WaitForSeconds(_spawnInterval);
-                ToSpawnColorBubble(_optionsArr[2]);
-                _turn++;
-            }
-            else if (_turn == 2)
-            {
-                // Spawn multiple bubbles with various colors
-                ToSpawnColorBubble(_optionsArr[0]);
-                yield return new WaitForSeconds(_spawnInterval);
-                ToSpawnColorBubble(_optionsArr[0]);
-                yield return new WaitForSeconds(_spawnInterval);
-                ToSpawnColorBubble(_optionsArr[2]);
-                yield return new WaitForSeconds(_spawnInterval);
-                ToSpawnColorBubble(_optionsArr[1]);
-                _turn = 0;
-            }
-
-            // Generate new random colors for the next turn
-            _optionsArr[1] = GetRandomColor();
-            _optionsArr[2] = GetRandomColor();
-            yield return new WaitForSeconds(_spawnInterval);
-        }
-    }
-
-    Color GetRandomColor()
+    private (string, Color) GetRandomColor()
     {
         // Function to select a random Color
         // Generate a random index within the range of the Color array
-        int randomIndex = Random.Range(0, _colours.Length);
+        int randomIndex = UnityEngine.Random.Range(0, HomeScreenMgrScript.Instance.BDSO.ColorList.Length);
+        string colorName = HomeScreenMgrScript.Instance.BDSO.ColorList[randomIndex];
+        string hexCode = HomeScreenMgrScript.Instance.BDSO.HexCodeList[randomIndex];
+        Color newColor;
+        if (hexCode != null)
+        {
+            if (ColorUtility.TryParseHtmlString(hexCode, out newColor))
+            {
+                return (colorName, newColor);
+            }
+        }
 
         // Return the Color at the random index
-        return _colours[randomIndex];
+        return (colorName, Color.white);
     }
 
-    string ConvertColorToString(Color inputColor)
-    {
-        // Convert a Color to its corresponding string representation
-        if (inputColor == Color.black)
-            return "Black";
-        else if (inputColor == Color.blue)
-            return "Blue";
-        else if (inputColor == Color.cyan)
-            return "Cyan";
-        else if (inputColor == Color.gray)
-            return "Gray";
-        else if (inputColor == Color.green)
-            return "Green";
-        else if (inputColor == Color.grey)
-            return "Grey";
-        else if (inputColor == Color.magenta)
-            return "Pink";
-        else if (inputColor == Color.red)
-            return "Red";
-        else if (inputColor == Color.white)
-            return "White";
-        else if (inputColor == Color.yellow)
-            return "Yellow";
-
-        return "Unknown"; // Return "Unknown" if the color doesn't match known colors
-    }
-
-    #endregion
-
-
-    #region Alphabets Selection
-
-    private IEnumerator OnAlphabetDeploy()
-    {
-        string[] _optionsArr = new string[3]; // Array to store alphabet options
-        char selectedLetter = GetRandomAlphabet(); // Get a random alphabet letter
-        _selectedChar = selectedLetter.ToString(); // Set the selected letter as the target
-        _score = 0; // Reset the player's score
-        _turn = 0; // Initialize the turn counter
-
-        // Display game instructions
-        _tmproText.text = "Click On Bubble Letter " + _selectedChar;
-        _tmproScore.text = "Wait";
-
-        // Countdown before starting the game
-        yield return new WaitForSeconds(1);
-        _tmproScore.text = "3";
-        yield return new WaitForSeconds(1);
-        _tmproScore.text = "2";
-        yield return new WaitForSeconds(1);
-        _tmproScore.text = "1";
-        yield return new WaitForSeconds(1);
-        _tmproScore.text = "Start";
-
-        // Display the player's score and spawn bubbles with alphabet letters
-        yield return new WaitForSeconds(1);
-        _tmproScore.text = "Score: ";
-
-        while (_score < 10)
-        {
-            if (_turn == 0)
-            {
-                // Spawn a bubble with the selected alphabet letter
-                ToSpawnBubble(_optionsArr[0]);
-                _turn++;
-            }
-            else if (_turn == 1)
-            {
-                // Spawn two bubbles with random alphabet letters
-                ToSpawnBubble(_optionsArr[1]);
-                yield return new WaitForSeconds(_spawnInterval);
-                ToSpawnBubble(_optionsArr[2]);
-                _turn++;
-            }
-            else if (_turn == 2)
-            {
-                // Spawn multiple bubbles with various alphabet letters
-                ToSpawnBubble(_optionsArr[0]);
-                yield return new WaitForSeconds(_spawnInterval);
-                ToSpawnBubble(_optionsArr[0]);
-                yield return new WaitForSeconds(_spawnInterval);
-                ToSpawnBubble(_optionsArr[2]);
-                yield return new WaitForSeconds(_spawnInterval);
-                ToSpawnBubble(_optionsArr[1]);
-                _turn = 0;
-            }
-
-            // Generate new random alphabet letters for the next turn
-            _optionsArr[1] = GetRandomAlphabet().ToString();
-            _optionsArr[2] = GetRandomAlphabet().ToString();
-            yield return new WaitForSeconds(_spawnInterval);
-        }
-    }
-
-    char GetRandomAlphabet()
+    (string, Color) GetRandomAlphabet()
     {
         // Function to select a random alphabet
         // Generate a random index within the range of the alphabet array
-        int randomIndex = Random.Range(0, _alphabets.Length);
+        string[] alphbetArray = HomeScreenMgrScript.Instance.BDSO.AllAlphabet;
+        int randomIndex = UnityEngine.Random.Range(0, alphbetArray.Length);
 
         // Return the alphabet at the random index
-        return _alphabets[randomIndex];
+        return (alphbetArray[randomIndex], Color.white);
     }
+
+    (string, Color) GetRandomNumbers()
+    {
+        // Function to select a random Number
+        // Generate a random index within the range of the Number array
+        string[] numberArray = HomeScreenMgrScript.Instance.BDSO.NumberList;
+        int randomIndex = UnityEngine.Random.Range(0, numberArray.Length);
+
+        // Return the Number at the random index
+        return (numberArray[randomIndex], Color.white);
+    }
+
 
     #endregion
 
 
-    #region Numbers Selection
+    #region Bubble Selection Functions
 
-    private IEnumerator OnNumbersDeploy()
+    private void OnNewBubbleGameStart()
     {
-        string[] _optionsArr = new string[3]; // Array to store number options
-        string selected = GetRandomNumbers().ToString(); // Get a random number
-        _selectedChar = selected; // Set the selected number as the target
-        _score = 0; // Reset the player's score
-        _turn = 0; // Initialize the turn counter
+        NewSelectionInitialize();
+
+        StartCoroutine(StartSequence());
+
+        InvokeRepeating(nameof(ChangingTheBubble), _bubbleChangeTimer, _bubbleChangeTimer);
+    }
+
+    private void NewSelectionInitialize()
+    {
+        switch (_bubbleState)
+        {
+            case AllBubbleStates.ColorBubble:
+                (_selectedChar, _selectedColor) = GetRandomColor(); // Get a random color
+                _selectedbubble.color = _selectedColor;
+                _selectedbubble.transform.GetChild(0).GetComponent<TextMeshProUGUI>().color = new Color32(0, 0, 0, 0);
+
+                break;
+            case AllBubbleStates.AlphabetBubble:
+                (_selectedChar, _selectedColor) = GetRandomAlphabet(); // Get a random Alphabet
+                _selectedbubble.color = _selectedColor;
+                _selectedbubble.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = _selectedChar;
+                _selectedbubble.transform.GetChild(0).GetComponent<TextMeshProUGUI>().color = new Color32(0, 0, 0, 255);
+
+                break;
+            case AllBubbleStates.NumberBubble:
+                (_selectedChar, _selectedColor) = GetRandomNumbers(); // Get a random Number
+                _selectedbubble.color = _selectedColor;
+                _selectedbubble.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = _selectedChar;
+                _selectedbubble.transform.GetChild(0).GetComponent<TextMeshProUGUI>().color = new Color32(0, 0, 0, 255);
+
+                break;
+            default:
+                break;
+        }
 
         // Display game instructions
-        _tmproText.text = "Click On Number Bubble " + _selectedChar;
-        _tmproScore.text = "Wait";
+        _headerText.text = "Pop The " + _selectedChar + " Bubble";
+    }
+
+    private IEnumerator StartSequence()
+    {
+        AnimationScript.Instance.PlayAnimation();
+        float waitTime = AnimationScript.Instance.AnimationTime;
+        yield return new WaitForSeconds(waitTime);
+
+        _startSequence.gameObject.SetActive(true);
+        _startSequence.text = "Wait";
 
         // Countdown before starting the game
         yield return new WaitForSeconds(1);
-        _tmproScore.text = "3";
+        _startSequence.text = "3";
         yield return new WaitForSeconds(1);
-        _tmproScore.text = "2";
+        _startSequence.text = "2";
         yield return new WaitForSeconds(1);
-        _tmproScore.text = "1";
+        _startSequence.text = "1";
         yield return new WaitForSeconds(1);
-        _tmproScore.text = "Start";
+        _startSequence.text = "Start";
 
-        // Display the player's score and spawn bubbles with numbers
+        // Display the player's score and spawn bubbles
         yield return new WaitForSeconds(1);
-        _tmproScore.text = "Score: ";
+        _startSequence.gameObject.SetActive(false);
 
-        while (_score < 10)
+        StartCoroutine(OnSpawnContinuous());
+    }
+
+    private IEnumerator OnSpawnContinuous()
+    {
+        Func<(string, Color)> storedFunction;
+
+        switch (_bubbleState)
         {
-            if (_turn == 0)
+            case AllBubbleStates.ColorBubble:
+
+                storedFunction = GetRandomColor;
+
+                break;
+            case AllBubbleStates.AlphabetBubble:
+
+                storedFunction = GetRandomAlphabet;
+
+                break;
+            case AllBubbleStates.NumberBubble:
+
+                storedFunction = GetRandomNumbers;
+
+                break;
+            default:
+
+                storedFunction = GetRandomNumbers;
+                break;
+        }
+
+        while (true) // Run infinitely
+        {
+            int randomNumber = UnityEngine.Random.Range(1, 4);
+
+            if (randomNumber == 1)
             {
-                // Spawn a bubble with the selected number
-                ToSpawnBubble(_optionsArr[0]);
-                _turn++;
+                BubbleSpawn(_selectedChar, _selectedColor);
             }
-            else if (_turn == 1)
+            else
             {
-                // Spawn two bubbles with random numbers
-                ToSpawnBubble(_optionsArr[1]);
-                yield return new WaitForSeconds(_spawnInterval);
-                ToSpawnBubble(_optionsArr[2]);
-                _turn++;
-            }
-            else if (_turn == 2)
-            {
-                // Spawn multiple bubbles with various numbers
-                ToSpawnBubble(_optionsArr[0]);
-                yield return new WaitForSeconds(_spawnInterval);
-                ToSpawnBubble(_optionsArr[0]);
-                yield return new WaitForSeconds(_spawnInterval);
-                ToSpawnBubble(_optionsArr[2]);
-                yield return new WaitForSeconds(_spawnInterval);
-                ToSpawnBubble(_optionsArr[1]);
-                _turn = 0;
+                (string newRandomName, Color newRandomColor) = storedFunction();
+                BubbleSpawn(newRandomName, newRandomColor);
             }
 
-            // Generate new random numbers for the next turn
-            _optionsArr[1] = GetRandomNumbers().ToString();
-            _optionsArr[2] = GetRandomNumbers().ToString();
             yield return new WaitForSeconds(_spawnInterval);
         }
     }
 
-    string GetRandomNumbers()
+    private void ChangingTheBubble()
     {
-        // Function to select a random Number
-        // Generate a random index within the range of the Number array
-        int randomIndex = Random.Range(0, _numbers.Length);
-
-        // Return the Number at the random index
-        return _numbers[randomIndex];
+        StopAllCoroutines();
+        NewSelectionInitialize();
+        StartCoroutine(OnSpawnContinuous());
     }
 
     #endregion
+
 
 }

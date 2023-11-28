@@ -4,21 +4,17 @@ using UnityEngine.EventSystems;
 
 public class BigSmallDropperScript : MonoBehaviour, IDropHandler
 {
-    [Header("Strings")]
-    string _bigImageName = "BS_Big_Image";
-    string _smallImageName = "BS_Small_Image";
-
-
     public void OnDrop(PointerEventData eventData)
     {
         // Get the GameObject that was dropped.
         GameObject droppedObj = eventData.pointerDrag;
+        float width = droppedObj.GetComponent<RectTransform>().rect.width;
 
         if (droppedObj != null)
         {
             string dropObjName = droppedObj.name;
 
-            if (gameObject.name == "Bigger_Item_DropZone" && dropObjName == _bigImageName)
+            if (gameObject.name == "Bigger_Item_DropZone" && width == BigSmallPanelScript.Instance.BigHeightWidth)
             {
                 // Reset the position of the dropped object using a method in BigSmallDraggerScript.
                 droppedObj.GetComponent<BigSmallDraggerScript>().GmObjPosReset(droppedObj, true);
@@ -32,7 +28,7 @@ public class BigSmallDropperScript : MonoBehaviour, IDropHandler
                 // Check the current objective in the BigSmallPanelScript.
                 BigSmallPanelScript.Instance.CheckCurrentObjective();
             }
-            else if (gameObject.name == "Smaller_Item_DropZone" && dropObjName == _smallImageName)
+            else if (gameObject.name == "Smaller_Item_DropZone" && width == BigSmallPanelScript.Instance.SmallHeightWidth)
             {
                 // Reset the position of the dropped object using a method in BigSmallDraggerScript.
                 droppedObj.GetComponent<BigSmallDraggerScript>().GmObjPosReset(droppedObj, true);

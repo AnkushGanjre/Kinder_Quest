@@ -78,24 +78,39 @@ public class MatchingDragDropScript : MonoBehaviour, IBeginDragHandler, IEndDrag
 
         if (droppedObj != null)
         {
-            // Get the names of the dropped object and receiving object sprites.
-            string dropObjName = droppedObj.GetComponent<Image>().sprite.name;
-            string receingObjName = gameObject.GetComponent<Image>().sprite.name;
+            StartCoroutine(OnDropCheck(droppedObj, gameObject));
+        }
 
-            // Remove the "Baby" suffix from the names if it exists.
-            if (dropObjName.EndsWith("Baby"))
+        
+    }
+
+    private IEnumerator OnDropCheck(GameObject droppedGO, GameObject receiveGO)
+    {
+        yield return new WaitForEndOfFrame();
+
+        if (droppedGO.transform.parent != receiveGO.transform.parent)
+        {
+            int droppedObjIndex = GetChildIndex(droppedGO.transform, droppedGO.transform.parent);
+            int receiveObjIndex = GetChildIndex(receiveGO.transform, receiveGO.transform.parent);
+
+            string droppedObjName;
+            string receingObjName;
+
+            if (transform.parent == MatchingPanelScript.Instance.UpperPanel)
             {
-                dropObjName = dropObjName.Substring(0, dropObjName.Length - 5);
+                droppedObjName = MatchingPanelScript.Instance.LowerMatchList[droppedObjIndex];
+                receingObjName = MatchingPanelScript.Instance.UpperMatchList[receiveObjIndex];
             }
-            if (receingObjName.EndsWith("Baby"))
+            else
             {
-                receingObjName = receingObjName.Substring(0, receingObjName.Length - 5);
+                droppedObjName = MatchingPanelScript.Instance.UpperMatchList[droppedObjIndex];
+                receingObjName = MatchingPanelScript.Instance.LowerMatchList[receiveObjIndex];
             }
 
             // Check if the names match, and if they do, disable the objects.
-            if (dropObjName == receingObjName)
+            if (droppedObjName == receingObjName)
             {
-                StartCoroutine(OnDisablingObject(droppedObj, gameObject));
+                StartCoroutine(OnDisablingObject(droppedGO, receiveGO));
             }
         }
     }

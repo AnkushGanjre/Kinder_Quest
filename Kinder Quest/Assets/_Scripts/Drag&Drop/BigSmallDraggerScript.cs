@@ -9,19 +9,22 @@ public class BigSmallDraggerScript : MonoBehaviour, IBeginDragHandler, IEndDragH
     private Transform _dragableObjHolder;
     private Transform _tempHolder;
     private CanvasGroup _canvasGroup;
+    private Vector3 _originalPosition;
+    private int _objSiblingIndex;
 
     [Header("Boolean Flags")]
     public bool IsDropSuccessful;
 
     private void Awake()
     {
-        // Find and assign references to the dragable object holder and temporary holder.
-        _dragableObjHolder = GameObject.Find("Item_Dragger_Zone").transform;
         _tempHolder = GameObject.Find("BS_Temporary_Holder").transform;
     }
 
     private void Start()
     {
+        // Find and assign references to the dragable object holder and temporary holder.
+        _dragableObjHolder = BigSmallPanelScript.Instance.DraggerContent;
+
         // Initialize references and components.
         _rectTransform = GetComponent<RectTransform>();
         _canvasGroup = GetComponent<CanvasGroup>();
@@ -32,8 +35,9 @@ public class BigSmallDraggerScript : MonoBehaviour, IBeginDragHandler, IEndDragH
         // Disable raycast blocking for the dragged object.
         _canvasGroup.blocksRaycasts = false;
 
-        // Disable horizontal layout group to prevent layout reordering during drag.
-        _dragableObjHolder.GetComponent<HorizontalLayoutGroup>().enabled = false;
+        // Get the current sibling index & Position of the dragged object.
+        _objSiblingIndex = GetChildIndex(transform, transform.parent);
+        _originalPosition = transform.position;
 
         // Change the parent of the dragged object to the temporary holder.
         transform.SetParent(_tempHolder.transform);
@@ -60,17 +64,10 @@ public class BigSmallDraggerScript : MonoBehaviour, IBeginDragHandler, IEndDragH
     {
         // Reset the position of the game object and enable horizontal layout group.
         gmObj.transform.SetParent(_dragableObjHolder);
-        _dragableObjHolder.GetComponent<HorizontalLayoutGroup>().enabled = true;
+        transform.position = _originalPosition;
 
-        // Determine the sibling index based on the object's name.
-        if (gmObj.name == "BS_Small_Image")
-        {
-            gmObj.transform.SetSiblingIndex(BigSmallPanelScript.Instance.SmallObjSiblingNum);
-        }
-        else
-        {
-            gmObj.transform.SetSiblingIndex(BigSmallPanelScript.Instance.BigObjSiblingNum);
-        }
+        // Reset the sibling index of the dragged object.
+        gameObject.transform.SetSiblingIndex(_objSiblingIndex);
 
         // If the object was successfully dropped, update its color and set the IsDropSuccessful flag.
         if (isDropped)
@@ -78,5 +75,17 @@ public class BigSmallDraggerScript : MonoBehaviour, IBeginDragHandler, IEndDragH
             IsDropSuccessful = isDropped;
             gmObj.GetComponent<Image>().color = new Color32(255, 255, 255, 100);
         }
+    }
+
+    private int GetChildIndex(Transform child, Transform parent)
+    {
+        // Utility function to find the index of a child within a parent's children.
+        for (int i = 0; i < parent.childCount; i++)
+        {
+            if (parent.GetChild(i) == child)
+                return i;
+        }
+
+        return -1;
     }
 }

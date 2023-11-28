@@ -3,6 +3,9 @@ using UnityEngine.UI;
 
 public class DrawToolsScript : MonoBehaviour
 {
+    [Header("Singleton Reference")]
+    public static DrawToolsScript Instance;
+
     [Header("GameObjects & Transform")]
     [SerializeField] GameObject _toolsPanel;
     [SerializeField] GameObject _pencilSizeSelector;
@@ -18,6 +21,8 @@ public class DrawToolsScript : MonoBehaviour
 
     private void Awake()
     {
+        Instance = Instance ?? this;  // Setting Singleton Instance
+
         // Find and set references to various UI elements and objects
         _toolsPanel = GameObject.Find("Tools_Panel");
         _pencilSizeSelector = GameObject.Find("Pencil_size_selector");
@@ -32,7 +37,6 @@ public class DrawToolsScript : MonoBehaviour
         _toolsPanel.transform.GetChild(1).GetComponent<Button>().onClick.AddListener(() => { OnEraserBtn(); });
         _toolsPanel.transform.GetChild(2).GetComponent<Button>().onClick.AddListener(() => { OnTrashCanBtn(); });
         _toolsPanel.transform.GetChild(3).GetComponent<Button>().onClick.AddListener(() => { OnUndoBtn(); });
-        _toolsPanel.transform.GetChild(4).GetComponent<Button>().onClick.AddListener(() => { OnSaveBtn(); });
 
         // Set up button click listeners for pencil size selection
         for (int i = 0; i  < _pencilSizeSelector.transform.childCount; i++)
@@ -58,13 +62,14 @@ public class DrawToolsScript : MonoBehaviour
 
     private void OnPencilBtn()
     {
-        // Check if the eraser tool is currently active
+        if (_pencilSizeSelector.activeInHierarchy)
+        {
+            _pencilSizeSelector.SetActive(false);
+            return;
+        }
         if (isEraserToolOn)
         {
-            // If the eraser tool is active, switch it off
-            isEraserToolOn = false;
-            FreeHandDrawMgrScript.Instance.isOtherPanelOpen = false;
-            _eraserInAction.gameObject.SetActive(false);
+            SetEraserOff();
             return;
         }
 
@@ -80,6 +85,16 @@ public class DrawToolsScript : MonoBehaviour
 
     private void OnEraserBtn()
     {
+        if (_pencilSizeSelector.activeInHierarchy)
+        {
+            _pencilSizeSelector.SetActive(false);
+        }
+        if (isEraserToolOn)
+        {
+            SetEraserOff();
+            return;
+        }
+
         // Set the flag to indicate that the eraser tool is active
         isEraserToolOn = true;
 
@@ -92,6 +107,16 @@ public class DrawToolsScript : MonoBehaviour
 
     private void OnTrashCanBtn()
     {
+        if (_pencilSizeSelector.activeInHierarchy)
+        {
+            _pencilSizeSelector.SetActive(false);
+        }
+        if (isEraserToolOn)
+        {
+            SetEraserOff();
+            return;
+        }
+
         // Get a reference to the parent of the drawn lines
         Transform lineParent = FreeHandDrawMgrScript.Instance.LineParent;
 
@@ -108,6 +133,16 @@ public class DrawToolsScript : MonoBehaviour
 
     private void OnUndoBtn()
     {
+        if (_pencilSizeSelector.activeInHierarchy)
+        {
+            _pencilSizeSelector.SetActive(false);
+        }
+        if (isEraserToolOn)
+        {
+            SetEraserOff();
+            return;
+        }
+
         // Get a reference to the parent of the drawn lines
         Transform lineParent = FreeHandDrawMgrScript.Instance.LineParent;
 
@@ -120,11 +155,6 @@ public class DrawToolsScript : MonoBehaviour
             // Destroy the last child object, effectively undoing the last drawn line
             Destroy(lastChild.gameObject);
         }
-    }
-
-    private void OnSaveBtn()
-    {
-        Debug.Log("Save");
     }
 
     #endregion
@@ -282,10 +312,12 @@ public class DrawToolsScript : MonoBehaviour
         secondLineRenderer.startWidth = secondLineRenderer.endWidth = lineRenderer.startWidth;
 
         // Create a new material for the second line
-        secondLineRenderer.material = new Material(Shader.Find("Skybox/6 Sided"));
+        secondLineRenderer.material = new Material(Shader.Find("Sprites/Default"));
 
         // Set the color of the second line
-        secondLineRenderer.material.SetColor("_Tint", FreeHandDrawMgrScript.Instance.LineColor);
+        FreeHandDrawMgrScript.Instance.LineColor.a = 1f;
+        secondLineRenderer.material.color = FreeHandDrawMgrScript.Instance.LineColor;
+        //secondLineRenderer.material.SetColor("_Tint", FreeHandDrawMgrScript.Instance.LineColor);
 
         // Set the sorting order of the second line (rendering order)
         secondLineRenderer.sortingOrder = lineRenderer.sortingOrder;
@@ -300,4 +332,23 @@ public class DrawToolsScript : MonoBehaviour
     }
 
     #endregion
+
+
+    public void SetEraserOff()
+    {
+        if (_pencilSizeSelector.activeInHierarchy)
+        {
+            _pencilSizeSelector.SetActive(false);
+        }
+
+        // If the eraser tool is active, switch it off
+        if (isEraserToolOn)
+        {
+            isEraserToolOn = false;
+            FreeHandDrawMgrScript.Instance.isOtherPanelOpen = false;
+            _eraserInAction.gameObject.SetActive(false);
+        }
+        
+    }
+
 }

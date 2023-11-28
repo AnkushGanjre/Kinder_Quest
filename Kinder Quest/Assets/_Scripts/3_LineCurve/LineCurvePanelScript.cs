@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,9 +11,9 @@ public class LineCurvePanelScript : MonoBehaviour
     [SerializeField] private Button _worksheetBtn;
 
     [Header("Dot Line Curve")]
-    [SerializeField] private Button _dotBtn;
     [SerializeField] private Button _lineBtn;
     [SerializeField] private Button _curveBtn;
+    [SerializeField] private Button _shapeBtn;
 
     [Header("Line Curve Panel Components")]
     [SerializeField] private Transform _lcuContentTransform;
@@ -20,34 +21,52 @@ public class LineCurvePanelScript : MonoBehaviour
     [Header("Boolean Flags")]
     private bool isTracingSelectionOn;
 
+    [Header("LCS Image Array")]
+    [SerializeField] private List<Sprite> _lineImgArr = new List<Sprite>();
+    [SerializeField] private List<Sprite> _curveImgArr = new List< Sprite>();
+    [SerializeField] private List<Sprite> _shapeImgArr = new List<Sprite>();
+
     private void Awake()
     {
         // Find and set references to UI elements and objects
         _tracingBtn = GameObject.Find("Lcu_Tracing_Btn").GetComponent<Button>();
         _worksheetBtn = GameObject.Find("Lcu_Worksheet_Btn").GetComponent<Button>();
 
-        _dotBtn = GameObject.Find("Lcu_Dots_Btn").GetComponent<Button>();
         _lineBtn = GameObject.Find("Lcu_Line_Btn").GetComponent<Button>();
         _curveBtn = GameObject.Find("Lcu_Curve_Btn").GetComponent<Button>();
+        _shapeBtn = GameObject.Find("Lcu_Shape_Btn").GetComponent<Button>();
 
         _lcuContentTransform = GameObject.Find("Lcu_Panel_Content").transform;
     }
 
     private void Start()
     {
+        LoadingAssets();
+
         // Assign click event handlers to buttons
         _tracingBtn.onClick.AddListener(() => { OnLcuTracingBtn(); });
         _worksheetBtn.onClick.AddListener(() => { OnLCuWorksheetBtn(); });
-        _dotBtn.onClick.AddListener(() => { OnLcuDotBtn(); });
         _lineBtn.onClick.AddListener(() => { OnLcuLineBtn(); });
         _curveBtn.onClick.AddListener(() => { OnLcuCurveBtn(); });
+        _shapeBtn.onClick.AddListener(() => { OnLcuShapeBtn(); });
+
+        AdjustChildSize();
+    }
+
+    private void AdjustChildSize()
+    {
+        float width = _lcuContentTransform.GetComponent<RectTransform>().rect.width;
+        float height = _lcuContentTransform.GetComponent<RectTransform>().rect.height;
+        width = Mathf.RoundToInt(width / 5.73f);
+        height = Mathf.RoundToInt(height / 3.4f);
+        _lcuContentTransform.GetComponent<GridLayoutGroup>().cellSize = new Vector2(width, height);
     }
 
     public void OnPanelInitiate()
     {
         // Initialize the panel with Tracing & Dots category
         OnLcuTracingBtn();
-        OnLcuDotBtn();
+        OnLcuLineBtn();
     }
 
     #region Main Panel Button's Function
@@ -56,9 +75,8 @@ public class LineCurvePanelScript : MonoBehaviour
     {
         isTracingSelectionOn = true;
 
-        
         // Set the Button color to indicate tracing
-        Sprite yellowBtn = TracingMgrScript.Instance.YellowBtnSprite;
+        Sprite yellowBtn = WordsPanelScript.Instance.YellowBtnSprite;
         foreach (Transform t in _lcuContentTransform)
         {
             t.GetComponent<Image>().sprite = yellowBtn;
@@ -69,10 +87,8 @@ public class LineCurvePanelScript : MonoBehaviour
     {
         isTracingSelectionOn = false;
 
-
-
         // Set the Button color to indicate Worksheet
-        Sprite orangeBtn = TracingMgrScript.Instance.OrangeBtnSprite;
+        Sprite orangeBtn = WordsPanelScript.Instance.OrangeBtnSprite;
         foreach (Transform t in _lcuContentTransform)
         {
             t.GetComponent<Image>().sprite = orangeBtn;
@@ -84,24 +100,12 @@ public class LineCurvePanelScript : MonoBehaviour
 
     #region Sub Panel Button's Function
 
-    public void OnLcuDotBtn()
+    public void OnLcuLineBtn()
     {
-        // Change text for each item in the content to represent dots
+        // Change text for each item in the content to represent Line
         for (int i = 0; i < _lcuContentTransform.childCount; i++)
         {
-            _lcuContentTransform.GetChild(i).GetChild(0).GetComponent<TextMeshProUGUI>().text = "Shape " + (i + 1);
-        }
-
-        // Start a coroutine to assign event click functions to Line Curve buttons
-        StartCoroutine(OnAssignSubBtnFunction());
-    }
-
-    private void OnLcuLineBtn()
-    {
-        // Change text for each item in the content to represent lines
-        for (int i = 0; i < _lcuContentTransform.childCount; i++)
-        {
-            _lcuContentTransform.GetChild(i).GetChild(0).GetComponent<TextMeshProUGUI>().text = "Line " + (i + 1);
+            _lcuContentTransform.GetChild(i).GetChild(0).GetComponent<Image>().sprite = _lineImgArr[i];
         }
 
         // Start a coroutine to assign event click functions to Line Curve buttons
@@ -110,14 +114,42 @@ public class LineCurvePanelScript : MonoBehaviour
 
     private void OnLcuCurveBtn()
     {
-        // Change text for each item in the content to represent curves
+        // Change text for each item in the content to represent lines
         for (int i = 0; i < _lcuContentTransform.childCount; i++)
         {
-            _lcuContentTransform.GetChild(i).GetChild(0).GetComponent<TextMeshProUGUI>().text = "Curve " + (i + 1);
+            _lcuContentTransform.GetChild(i).GetChild(0).GetComponent<Image>().sprite = _curveImgArr[i];
         }
 
         // Start a coroutine to assign event click functions to Line Curve buttons
         StartCoroutine(OnAssignSubBtnFunction());
+    }
+
+    private void OnLcuShapeBtn()
+    {
+        // Change text for each item in the content to represent curves
+        for (int i = 0; i < _lcuContentTransform.childCount; i++)
+        {
+            _lcuContentTransform.GetChild(i).GetChild(0).GetComponent<Image>().sprite = _shapeImgArr[i];
+        }
+
+        // Start a coroutine to assign event click functions to Line Curve buttons
+        StartCoroutine(OnAssignSubBtnFunction());
+    }
+
+    private void LoadingAssets()
+    {
+        // Change image for each item in the content
+        for (int i = 0; i < _lcuContentTransform.childCount; i++)
+        {
+            Sprite sprite1 = Resources.Load<Sprite>("Line_Curve_Shape/Lcs_L" + (i + 1));
+            _lineImgArr.Add(sprite1);
+
+            Sprite sprite2 = Resources.Load<Sprite>("Line_Curve_Shape/Lcs_C" + (i + 1));
+            _curveImgArr.Add(sprite2);
+
+            Sprite sprite3 = Resources.Load<Sprite>("Line_Curve_Shape/Lcs_S" + (i + 1));
+            _shapeImgArr.Add(sprite3);
+        }
     }
 
     #endregion
@@ -127,6 +159,10 @@ public class LineCurvePanelScript : MonoBehaviour
 
     private IEnumerator OnAssignSubBtnFunction()
     {
+        yield return new WaitForEndOfFrame(); // Wait for the end of the frame.
+        yield return new WaitForEndOfFrame(); // Wait for the end of the frame.
+        yield return new WaitForEndOfFrame(); // Wait for the end of the frame.
+        yield return new WaitForEndOfFrame(); // Wait for the end of the frame.
         // Loop through each subcategory button in the Line Curve panel
         foreach (Transform t in _lcuContentTransform)
         {
@@ -134,17 +170,26 @@ public class LineCurvePanelScript : MonoBehaviour
             t.GetComponent<Button>().onClick.RemoveAllListeners();
             yield return new WaitForEndOfFrame(); // Wait for the end of the frame.
 
-            // Get the activity name from the text of the subcategory button
-            string activity = t.GetChild(0).GetComponent<TextMeshProUGUI>().text;
+            // Getting button sprite name
+            string imageName = t.GetChild(0).GetComponent<Image>().sprite.name;
 
             // Add a new click listener that triggers the OnWordsActivity method with the selected activity name
-            t.GetComponent<Button>().onClick.AddListener(() => { OnLineCurveActivity(activity); });
+            t.GetComponent<Button>().onClick.AddListener(() => { OnLineCurveActivity(imageName); });
         }
     }
 
     private void OnLineCurveActivity(string input)
     {
-        Debug.Log(isTracingSelectionOn ? "Tracing " + input : "Worksheet " + input);
+        if (isTracingSelectionOn)
+        {
+            // checking if it is Tracing Activity
+            TracingMgrScript.Instance.OnStartTracing(input);
+        }
+        else
+        {
+            // checking if it is Worksheet Activity
+            FreeHandDrawMgrScript.Instance.OnStartWorksheet(input);
+        }
     }
 
     #endregion

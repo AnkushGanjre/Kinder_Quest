@@ -8,6 +8,7 @@ public class MagicCountPanelScript : MonoBehaviour
     public static MagicCountPanelScript Instance;
 
     [Header("UI Elements")]
+    private TextMeshProUGUI _headerText;
     private GameObject _imagePrefab;
     private Transform _imageGridTransform;
     private Transform _macOptionsParent;
@@ -22,22 +23,24 @@ public class MagicCountPanelScript : MonoBehaviour
 
     private void Awake()
     {
-        Instance = Instance == null ? this : Instance;  // Setting Singleton Instance
+        Instance = Instance ?? this;  // Setting Singleton Instance
         if (Instance != this) Destroy(gameObject);  // If not Active Singleton, destroy it
         DontDestroyOnLoad(gameObject);  // Ensure that the Singleton persists across scene changes
 
         // Find and assign references to UI elements.
+        _headerText = GameObject.Find("Mac_Count_Text").GetComponent<TextMeshProUGUI>();
         _imageGridTransform = GameObject.Find("Mac_ImageCount_Grid").transform;
         _macOptionsParent = GameObject.Find("Mac_Options_Parent").transform;
-        _macBackBtn = GameObject.Find("AB_MagicCount_BackButton").GetComponent<Button>();
-        _nextPanel = GameObject.Find("Mac_Final_Image");
+        _macBackBtn = GameObject.Find("Mac_MagicCount_BackButton").GetComponent<Button>();
+        _nextPanel = GameObject.Find("Mac_Next_Panel");
     }
 
     private void Start()
     {
         // Load the image prefab and set up UI event listeners.
-        _imagePrefab = Resources.Load<GameObject>("MagicCount_Prefab/Mac_Prefab");
+        _imagePrefab = Resources.Load<GameObject>("Prefabs/Count_Prefab");
         _macBackBtn.onClick.AddListener(() => { OnMacBackButton(); });
+        _nextPanel.transform.GetChild(0).GetChild(0).GetComponent<Button>().onClick.AddListener(() => { _macBackBtn.onClick.Invoke(); });
         _nextPanel.transform.GetChild(0).GetChild(1).GetComponent<Button>().onClick.AddListener(() => { OnNextBtnSelection(); });
         
         // Initialize the options buttons.
@@ -49,17 +52,25 @@ public class MagicCountPanelScript : MonoBehaviour
 
     public void OnMagicCountInitiate()
     {
+        AnimationScript.Instance.PlayAnimation();
+
         // Generate a random number for the correct option.
         _currentCorrectOption = Random.Range(1, 21);
 
-        // Load an image sprite (in this case, "Cap_A").
-        Sprite apple = Resources.Load<Sprite>("Tracing_Images/Dragger/Cap_A");
+        // Getting Random Object
+        string randomObject = GetRandomObject();
+
+        // Setting the heading text
+        _headerText.text = "How many " + randomObject + " are there?";
+
+        // Load the random image sprite.
+        Sprite countSprite = Resources.Load<Sprite>("AllObjectImages/" + randomObject);
 
         // Instantiate image objects based on the random number.
         for (int i = 0; i < _currentCorrectOption; i++)
         {
             GameObject gm = Instantiate(_imagePrefab, _imageGridTransform);
-            gm.GetComponent<Image>().sprite = apple;
+            gm.GetComponent<Image>().sprite = countSprite;
         }
 
         // Assign values to the buttons for the multiple choice options.
@@ -87,7 +98,7 @@ public class MagicCountPanelScript : MonoBehaviour
                 int uniqueNumber;
                 do
                 {
-                    uniqueNumber = Random.Range(1, 21);
+                    uniqueNumber = Random.Range(2, 21);
                 } while (ArrayContains(_usedNumbers, uniqueNumber) || uniqueNumber == randomNumber);
                 a--;
                 if (a < 0)
@@ -117,7 +128,7 @@ public class MagicCountPanelScript : MonoBehaviour
 
     }
 
-    bool ArrayContains(int[] array, int value)
+    private bool ArrayContains(int[] array, int value)
     {
         // Helper function to check if an array contains a specific value
         foreach (int item in array)
@@ -127,7 +138,36 @@ public class MagicCountPanelScript : MonoBehaviour
         }
         return false;
     }
-#endregion
+
+    private string GetRandomObject()
+    {
+        int arrayIndex = Random.Range(1, 5);
+        string[] selectedArray;
+
+        switch (arrayIndex)
+        {
+            case 1:
+                selectedArray = HomeScreenMgrScript.Instance.BDSO.FoodList;
+                break;
+            case 2:
+                selectedArray = HomeScreenMgrScript.Instance.BDSO.AnimalList;
+                break;
+            case 3:
+                selectedArray = HomeScreenMgrScript.Instance.BDSO.FruitList;
+                break;
+            case 4:
+                selectedArray = HomeScreenMgrScript.Instance.BDSO.ExtrasList;
+                break;
+            default:
+                selectedArray = HomeScreenMgrScript.Instance.BDSO.FoodList;
+                break; // In case something goes wrong
+        }
+
+        int randomIndex = Random.Range(0, selectedArray.Length);
+        return selectedArray[randomIndex];
+    }
+
+    #endregion
 
 
     #region Function for Button
@@ -143,7 +183,7 @@ public class MagicCountPanelScript : MonoBehaviour
         else
         {
             // The wrong option was selected. Handle this scenario.
-            Debug.LogError("Wrong, Try Again");
+            Debug.Log("Wrong, Try Again");
         }
     }
 

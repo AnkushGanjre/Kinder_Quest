@@ -7,6 +7,7 @@ public class HomeScreenMgrScript : MonoBehaviour
     public static HomeScreenMgrScript Instance;
 
     [Header("Script Reference")]
+    public BaseDataSO BDSO;
     private LineCurvePanelScript _lineCurvePanelScript;
     private AlphabetPanelScript _alphabetPanelScript;
     private NumberPanelScript _numberPanelScript;
@@ -39,7 +40,7 @@ public class HomeScreenMgrScript : MonoBehaviour
 
     private void Awake()
     {
-        Instance = Instance == null ? this : Instance;  // Setting Singleton Instance
+        Instance = Instance ?? this;  // Setting Singleton Instance
         if (Instance != this) Destroy(gameObject);  // If not Active Singleton, destroy it
         DontDestroyOnLoad(gameObject);  // Ensure that the Singleton persists across scene changes
 
@@ -54,6 +55,8 @@ public class HomeScreenMgrScript : MonoBehaviour
         // Setting All 3 scroll's value to 0 to start at left
         //_svClouds.value = _svIcons.value = _svBottom.value = 0;
         _svIcons.value = 0;
+
+        BDSO = Resources.Load<BaseDataSO>("AllDataSO");
 
         AssignFunctionToButtons(); // Set click event handlers for buttons
         DisablingGameObjects(); // Disable all the game objects initially
@@ -82,9 +85,8 @@ public class HomeScreenMgrScript : MonoBehaviour
         DragDropCanvas = GameObject.Find("DragDrop_Canvas");
         AllButtonsCanvas = GameObject.Find("AllButton_Canvas");
 
-        _iconContent = GameObject.Find("IconContent").transform;
-        ActivityCanvas = GameObject.Find("Activity_Canvas");
 
+        _iconContent = GameObject.Find("IconContent").transform;
         _settingsBtn = GameObject.Find("Settings_Btn").GetComponent<Button>();
         _backButton = GameObject.FindGameObjectsWithTag("BackButton");
         _doubleBackButton = GameObject.FindGameObjectsWithTag("DoubleBackButton");
@@ -169,10 +171,10 @@ public class HomeScreenMgrScript : MonoBehaviour
     private void OnSettingsBtn()
     {
         // Activating Setting Panel
-        foreach (Transform t in SettingsCanvas.transform)
-        {
-            t.gameObject.SetActive(true);
-        }
+        //foreach (Transform t in SettingsCanvas.transform)
+        //{
+        //    t.gameObject.SetActive(true);
+        //}
     }
 
     private void OnLineCurveBtn()
@@ -200,12 +202,16 @@ public class HomeScreenMgrScript : MonoBehaviour
     {
         // Activating Words Panel
         ActivityCanvas.transform.GetChild(3).gameObject.SetActive(true);
+        WordsPanelScript.Instance.OnWrdFoodsBtn();
     }
 
     private void OnDrawBtn()
     {
         // Activating Draw Panel
-        ActivityCanvas.transform.GetChild(4).gameObject.SetActive(true);
+        //ActivityCanvas.transform.GetChild(4).gameObject.SetActive(true);
+
+        AnimationScript.Instance.PlayAnimation();
+        FreeHandDrawMgrScript.Instance.OnDrawing("Canvas");
     }
 
     private void OnMatchingBtn()

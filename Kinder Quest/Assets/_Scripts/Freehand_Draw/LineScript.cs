@@ -26,10 +26,12 @@ public class LineScript : MonoBehaviour
         lr.startWidth = lr.endWidth = FreeHandDrawMgrScript.Instance.LineWidth;
 
         // Create a new material for the LineRenderer
-        lr.material = new Material(Shader.Find("Skybox/6 Sided"));
+        lr.material = new Material(Shader.Find("Sprites/Default"));
 
         // Set the color of the line based on the value specified in FreeHandDrawMgrScript
-        lr.material.SetColor("_Tint", FreeHandDrawMgrScript.Instance.LineColor);
+        //lr.material.SetColor("_MainColor", FreeHandDrawMgrScript.Instance.LineColor);
+        FreeHandDrawMgrScript.Instance.LineColor.a = 1f;
+        lr.material.color = FreeHandDrawMgrScript.Instance.LineColor;
 
         // Set the sorting order for the LineRenderer
         lr.sortingOrder = FreeHandDrawMgrScript.Instance.LineIndex;

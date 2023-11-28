@@ -45,6 +45,17 @@ public class AlphabetPanelScript : MonoBehaviour
         {
             t.GetComponent<Button>().onClick.AddListener(() => { OnLetterSelected(t.name); });
         }
+
+        AdjustChildSize();
+    }
+
+    private void AdjustChildSize()
+    {
+        float width = _alpContentTransform.GetComponent<RectTransform>().rect.width;
+        float height = _alpContentTransform.GetComponent<RectTransform>().rect.height;
+        width = Mathf.RoundToInt(width / 8.6f);
+        height = Mathf.RoundToInt(height / 5.2f);
+        _alpContentTransform.GetComponent<GridLayoutGroup>().cellSize = new Vector2(width, height);
     }
 
     public void OnPanelInitiate()
@@ -60,9 +71,8 @@ public class AlphabetPanelScript : MonoBehaviour
     {
         isTracingSelectionOn = true;
 
-
         // Set the Button color to indicate tracing
-        Sprite yellowBtn = TracingMgrScript.Instance.YellowBtnSprite;
+        Sprite yellowBtn = WordsPanelScript.Instance.YellowBtnSprite;
         foreach (Transform t in _alpContentTransform)
         {
             t.GetComponent<Image>().sprite = yellowBtn;
@@ -73,9 +83,8 @@ public class AlphabetPanelScript : MonoBehaviour
     {
         isTracingSelectionOn = false;
         
-        
         // Set the Button color to indicate Worksheet
-        Sprite orangeBtn = TracingMgrScript.Instance.OrangeBtnSprite;
+        Sprite orangeBtn = WordsPanelScript.Instance.OrangeBtnSprite;
         foreach (Transform t in _alpContentTransform)
         {
             t.GetComponent<Image>().sprite = orangeBtn;

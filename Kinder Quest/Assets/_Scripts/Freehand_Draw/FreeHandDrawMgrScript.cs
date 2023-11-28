@@ -13,6 +13,7 @@ public class FreeHandDrawMgrScript : MonoBehaviour
     private Camera _cam;
 
     [Header("Drawing Components")]
+    [SerializeField] GameObject _prefab;
     [SerializeField] LineScript _linePrefab;
     [SerializeField] GraphicRaycaster _freehandDrawRaycaster;
     [SerializeField] Button _freeHandDrawBackBtn;
@@ -37,12 +38,9 @@ public class FreeHandDrawMgrScript : MonoBehaviour
 
     private void Awake()
     {
-        Instance = Instance == null ? this : Instance;  // Setting Singleton Instance
+        Instance = Instance ?? this;  // Setting Singleton Instance
         if (Instance != this) Destroy(gameObject);  // If not Active Singleton, destroy it
         DontDestroyOnLoad(gameObject);  // Ensure that the Singleton persists across scene changes
-
-        // Load LinePrefab from resources
-        _linePrefab = Resources.Load<GameObject>("Line_Prefab/LinePrefab").GetComponent<LineScript>();
 
         // Getting all the instances of all Buttons & other Components
         LineParent = GameObject.Find("Line_Parent").transform;
@@ -60,6 +58,11 @@ public class FreeHandDrawMgrScript : MonoBehaviour
 
         // Set click event handlers for buttons
         _freeHandDrawBackBtn.onClick.AddListener(() => { OnFreeHandDrawBackBtn(); });
+
+        // Load LinePrefab from Assets
+        // Assigning _prefab to LineScript
+        _prefab = Resources.Load<GameObject>("Prefabs/Line_Prefab");
+        _linePrefab = _prefab.GetComponent<LineScript>();
 
         // Assigning color selection function to all the buttons
         OnColorPalatteBtn();
@@ -102,6 +105,8 @@ public class FreeHandDrawMgrScript : MonoBehaviour
 
     public void OnStartWorksheet(string input)
     {
+        AnimationScript.Instance.PlayAnimation();
+
         // Disabling all Screen Space Overlay Canvas
         TurnOffScreenSpaceOverlayCanvas();
 
@@ -131,6 +136,10 @@ public class FreeHandDrawMgrScript : MonoBehaviour
                 OnActivatingConnect();
                 break;
         }
+
+        LineWidth = 0.1f;
+        Scrollbar scroll = _colorPalatteContent.parent.parent.GetChild(1).GetComponent<Scrollbar>();
+        scroll.value = 1;
     }
 
 
@@ -162,12 +171,14 @@ public class FreeHandDrawMgrScript : MonoBehaviour
     {
         // Activate necessary components for a worksheet
         Transform background = HomeScreenMgrScript.Instance.DrawingBGCanvas.transform.GetChild(0);
+        Transform displayImg = HomeScreenMgrScript.Instance.DrawingBGCanvas.transform.GetChild(1);
         Transform worksheet = HomeScreenMgrScript.Instance.FreeHandDrawCanvas.transform.GetChild(0);
         Transform backButton = HomeScreenMgrScript.Instance.DrawToolsCanvas.transform.GetChild(0);
         Transform toolsPanel = HomeScreenMgrScript.Instance.DrawToolsCanvas.transform.GetChild(1);
 
         // Set components to be visible
         background.gameObject.SetActive(true);
+        displayImg.gameObject.SetActive(true);
         worksheet.gameObject.SetActive(true);
         backButton.gameObject.SetActive(true);
         toolsPanel.gameObject.SetActive(true);
@@ -176,12 +187,14 @@ public class FreeHandDrawMgrScript : MonoBehaviour
     private void OnActivatingCanvas()
     {
         // Activate components for the canvas drawing mode
+        Transform background = HomeScreenMgrScript.Instance.DrawingBGCanvas.transform.GetChild(0);
         Transform drawableCanvas = HomeScreenMgrScript.Instance.FreeHandDrawCanvas.transform.GetChild(1);
         Transform backButton = HomeScreenMgrScript.Instance.DrawToolsCanvas.transform.GetChild(0);
         Transform toolsPanel = HomeScreenMgrScript.Instance.DrawToolsCanvas.transform.GetChild(1);
         Transform colorPickerButton = HomeScreenMgrScript.Instance.DrawToolsCanvas.transform.GetChild(3);
 
         // Set components to be visible
+        background.gameObject.SetActive(true);
         drawableCanvas.gameObject.SetActive(true);
         backButton.gameObject.SetActive(true);
         toolsPanel.gameObject.SetActive(true);
@@ -257,6 +270,7 @@ public class FreeHandDrawMgrScript : MonoBehaviour
             Image img = _colorPalatteContent.GetChild(i).GetComponent<Image>();
             Button btn = _colorPalatteContent.GetChild(i).GetComponent<Button>();
             btn.onClick.AddListener(() => { LineColor = img.color; });
+            btn.onClick.AddListener(() => { DrawToolsScript.Instance.SetEraserOff(); });
         }
     }
 
@@ -267,6 +281,7 @@ public class FreeHandDrawMgrScript : MonoBehaviour
 
     private void OnGettingWorksheetResources(string input)
     {
+        Debug.Log(input);
         //// Getting Sprite and prefab from resources folder and Activitaing Them.
         //_maskImage.sprite = Resources.Load<Sprite>("Tracing_Images/Mask/" + input);
         //_dragHandlerImg.sprite = Resources.Load<Sprite>("Tracing_Images/Dragger/" + input);
