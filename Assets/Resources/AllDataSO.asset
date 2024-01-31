@@ -1,0 +1,200 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e68d723937277f442b480ce22910b22c, type: 3}
+  m_Name: AllDataSO
+  m_EditorClassIdentifier: 
+  NumberList:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+  - 15
+  - 16
+  - 17
+  - 18
+  - 19
+  - 20
+  AllAlphabet:
+  - A
+  - B
+  - C
+  - D
+  - E
+  - F
+  - G
+  - H
+  - I
+  - J
+  - K
+  - L
+  - M
+  - N
+  - O
+  - P
+  - Q
+  - R
+  - S
+  - T
+  - U
+  - V
+  - W
+  - X
+  - Y
+  - Z
+  AlphabetList:
+  - Apple
+  - Ball
+  - Cat
+  - Dog
+  - Egg
+  - Fish
+  - Grape
+  - Horse
+  - Ice_Cream
+  - Jar
+  - Kite
+  - Lion
+  - Moon
+  - Noodle
+  - Orange
+  - Pie
+  - Queen
+  - Rabbit
+  - Sun
+  - Tiger
+  - Unicorn
+  - Van
+  - Whale
+  - Xylophone
+  - Yak
+  - Zebra
+  FoodList:
+  - Pizza
+  - Burger
+  - Pasta
+  - Candy
+  - Donut
+  - Bread
+  - Fries
+  - Chips
+  - Cake
+  - Pie
+  - Cookie
+  - Noodle
+  FruitList:
+  - Apple
+  - Mango
+  - Grape
+  - Guava
+  - Peach
+  - Kiwi
+  - Pear
+  - Banana
+  - Oranges
+  - Berry
+  - Cherry
+  - Papaya
+  AnimalList:
+  - Dog
+  - Cat
+  - Hen
+  - Bear
+  - Deer
+  - Lion
+  - Tiger
+  - Cow
+  - Horse
+  - Wolf
+  - Yak
+  - Zebra
+  ExtrasList:
+  - Ball
+  - Balloons
+  - Chess
+  - Jar
+  - Kite
+  - Moon
+  - Queen
+  - Star_Emoji
+  - Sun
+  - Tablet
+  - Traffic_Cone
+  - Van
+  - Xylophone
+  ColorList:
+  - Red
+  - Blue
+  - Green
+  - Yellow
+  - Pink
+  - Black
+  - White
+  - Gray
+  - Brown
+  - Orange
+  - Silver
+  - Purple
+  HexCodeList:
+  - '#FF0000'
+  - '#0000FF'
+  - '#00FF00'
+  - '#FFFF00'
+  - '#e75480'
+  - '#000000'
+  - '#FFFFFF'
+  - '#A9A9A9'
+  - '#964B00'
+  - '#FFA500'
+  - '#C0C0C0'
+  - '#800080'
+  ShapeList:
+  - Circle
+  - Square
+  - Triangle
+  - Rectangle
+  - Star
+  - Diamond
+  - Heart
+  - Oval
+  ShapeObjList:
+  - Ball
+  - Chess
+  - Traffic_Cone
+  - Tablet
+  - Star_Emoji
+  - Kite
+  - Balloons
+  - Egg
+  ColorObjList:
+  - Cherry
+  - Whale
+  - Pear
+  - Mango
+  - Peach
+  - Zebra
+  - Egg
+  - Tablet
+  - Bear
+  - Oranges
+  - Moon
+  - Berry

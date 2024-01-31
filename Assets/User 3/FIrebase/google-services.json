@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "40944322738",
+    "firebase_url": "https://kinderquest-cc9e0-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "kinderquest-cc9e0",
+    "storage_bucket": "kinderquest-cc9e0.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:40944322738:android:48029dba0a48f7a244a1ab",
+        "android_client_info": {
+          "package_name": "com.MushroomWorldGames.KinderQuest"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAKUhzdVF6J809u3qbykdIYCbc_GFUjTb4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
